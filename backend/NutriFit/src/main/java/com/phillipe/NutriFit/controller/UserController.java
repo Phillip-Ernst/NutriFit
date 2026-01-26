@@ -1,6 +1,7 @@
 package com.phillipe.NutriFit.controller;
 
 import com.phillipe.NutriFit.model.User;
+import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,9 @@ public class UserController {
     @Autowired
     AuthenticationManager authenticationManager;
 
+    @Autowired
+    private JwtService jwtService;
+
 
     @PostMapping("/register")
     public User register(@RequestBody User user) {
@@ -33,7 +37,7 @@ public class UserController {
                 .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
         if (authentication.isAuthenticated()) {
-            return generateToken(user.getUsername());
+            return jwtService.generateToken(user.getUsername());
         } else {
             return "Invalid username or password.";
         }
