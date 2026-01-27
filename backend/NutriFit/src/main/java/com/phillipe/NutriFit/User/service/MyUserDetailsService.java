@@ -1,16 +1,15 @@
-package com.phillipe.NutriFit.service;
+package com.phillipe.NutriFit.User.service;
 
-import com.phillipe.NutriFit.dao.UserRepo;
-import com.phillipe.NutriFit.model.User;
-import com.phillipe.NutriFit.model.UserPrincipal;
+import com.phillipe.NutriFit.User.dao.UserRepo;
+import com.phillipe.NutriFit.User.model.User;
+import com.phillipe.NutriFit.User.model.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class MyUserDetailsService implements UserDetailsService {
+public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 
     @Autowired
     private UserRepo repo;
