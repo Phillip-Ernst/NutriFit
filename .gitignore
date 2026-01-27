@@ -12,3 +12,8 @@
 # Env / secrets
 .env
 *.env
+
+# Node / Frontend
+node_modules/
+dist/
+*.local
