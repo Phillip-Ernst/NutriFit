@@ -1,6 +1,6 @@
-package com.phillipe.NutriFit.dto.response;
+package com.phillipe.NutriFit.MealLog.dto.response;
 
-import com.phillipe.NutriFit.dto.request.FoodItemRequest;
+import com.phillipe.NutriFit.MealLog.dto.request.FoodItemRequest;
 import lombok.*;
 
 import java.time.Instant;

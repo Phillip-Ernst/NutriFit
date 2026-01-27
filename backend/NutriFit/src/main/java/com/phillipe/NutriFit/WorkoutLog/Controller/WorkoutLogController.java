@@ -1,4 +1,4 @@
-package com.phillipe.NutriFit.User.controller;
+package com.phillipe.NutriFit.WorkoutLog.Controller;
 
 public class WorkoutLogController {
 }

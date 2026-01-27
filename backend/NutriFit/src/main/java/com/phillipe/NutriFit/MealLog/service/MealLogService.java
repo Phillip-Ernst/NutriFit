@@ -1,4 +1,4 @@
-package com.phillipe.NutriFit.User.service;
+package com.phillipe.NutriFit.MealLog.service;
 
 import com.phillipe.NutriFit.MealLog.dto.request.MealLogRequest;
 import com.phillipe.NutriFit.MealLog.dto.response.MealLogResponse;

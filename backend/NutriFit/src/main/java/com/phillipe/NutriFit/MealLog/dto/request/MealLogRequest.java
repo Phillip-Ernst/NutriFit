@@ -1,4 +1,4 @@
-package com.phillipe.NutriFit.dto.request;
+package com.phillipe.NutriFit.MealLog.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

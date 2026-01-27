@@ -1,4 +1,4 @@
-package com.phillipe.NutriFit.User.service;
+package com.phillipe.NutriFit.WorkoutLog.service;
 
 public class WorkoutLogService {
 }

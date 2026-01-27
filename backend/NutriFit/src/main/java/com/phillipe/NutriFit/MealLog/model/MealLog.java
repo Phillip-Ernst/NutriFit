@@ -1,5 +1,6 @@
-package com.phillipe.NutriFit.User.model;
+package com.phillipe.NutriFit.MealLog.model;
 
+import com.phillipe.NutriFit.User.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 

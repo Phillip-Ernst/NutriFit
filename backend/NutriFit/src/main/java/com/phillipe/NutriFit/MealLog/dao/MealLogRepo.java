@@ -1,6 +1,6 @@
-package com.phillipe.NutriFit.dao;
+package com.phillipe.NutriFit.MealLog.dao;
 
-import com.phillipe.NutriFit.model.MealLog;
+import com.phillipe.NutriFit.MealLog.model.MealLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

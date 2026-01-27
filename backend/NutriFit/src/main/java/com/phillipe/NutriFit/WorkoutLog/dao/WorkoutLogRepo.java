@@ -1,4 +1,4 @@
-package com.phillipe.NutriFit.User.dao;
+package com.phillipe.NutriFit.WorkoutLog.dao;
 
 public class WorkoutLogRepo {
 }

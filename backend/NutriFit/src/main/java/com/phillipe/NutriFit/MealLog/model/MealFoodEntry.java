@@ -1,4 +1,4 @@
-package com.phillipe.NutriFit.User.model;
+package com.phillipe.NutriFit.MealLog.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

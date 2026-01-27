@@ -1,7 +1,7 @@
-package com.phillipe.NutriFit.service;
+package com.phillipe.NutriFit.User.service;
 
-import com.phillipe.NutriFit.dao.UserRepo;
-import com.phillipe.NutriFit.model.User;
+import com.phillipe.NutriFit.User.dao.UserRepo;
+import com.phillipe.NutriFit.User.model.User;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -21,4 +21,5 @@ public class UserService {
 
         return userRepo.save(user);
     }
+
 }

@@ -1,4 +1,4 @@
-package com.phillipe.NutriFit.User.model;
+package com.phillipe.NutriFit.WorkoutLog.model;
 
 public class WorkoutLog {
 }
