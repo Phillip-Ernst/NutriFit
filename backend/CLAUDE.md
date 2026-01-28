@@ -1,6 +1,63 @@
-# CLAUDE.md
+# Claude Instructions for NutriFit Backend (Spring Boot API)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Project Overview
+
+NutriFit is a Java Spring Boot backend API for a nutrition + fitness tracking app.
+It manages users, authentication, meal logging (with embedded food entries), and
+will later include workout logging.
+
+The backend is a Maven-based Spring Boot app with PostgreSQL persistence, stateless
+JWT auth, and a domain-based package organization.
+
+---
+
+## Architecture Patterns
+
+### 1. Domain-Feature Modular Packaging
+
+The codebase is organized by **domain feature**. Each domain is a top-level
+package under:
+
+`src/main/java/com/phillipe/NutriFit/`
+
+Each domain follows a consistent sub-package structure:
+```
+com/phillipe/NutriFit/{Domain}/
+├── model/          # JPA entities / embedded types
+├── controller/     # REST controllers
+├── service/        # Business logic (interfaces + implementations)
+├── dao/            # Spring Data repositories (JpaRepository)
+├── dto/            # API contracts (request/response DTOs)
+└── config/         # Domain config (security/filter/etc.)
+```
+
+
+#### Current domains
+
+- **User**
+    - Registration + login
+    - JWT auth + Spring Security configuration
+    - `JwtFilter` lives in `User/config/filter/`
+    - Security config lives in `User/config/SecurityConfig.java`
+
+- **MealLog**
+    - Meal logging with embedded `MealFoodEntry` items
+    - Uses interface + impl pattern: `MealLogService` / `MealLogServiceImpl`
+
+- **WorkoutLog**
+    - Skeleton only, not implemented yet
+
+### 2. Layered Responsibility (Pragmatic Clean-ish Layers)
+
+While this is not strict “Clean Architecture,” keep responsibilities separated:
+
+- **Model layer (`model/`)**: persistence entities + embedded types
+- **DTO layer (`dto/`)**: request/response shapes (API boundary)
+- **Service layer (`service/`)**: business logic (main unit of behavior)
+- **Controller layer (`controller/`)**: HTTP routing + auth principal extraction
+- **DAO layer (`dao/`)**: persistence access with Spring Data
+
+---
 
 ## Build & Run Commands
 
@@ -24,40 +81,212 @@ java -jar target/NutriFit-0.0.1-SNAPSHOT.jar
 ./mvnw test -Dtest=NutriFitApplicationTests#contextLoads
 ```
 
-## Environment Setup
+---
 
-Requires PostgreSQL. Connection configured via environment variables in `NutriFit-backend.env` (gitignored): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.
+## Environment & Configuration
 
-Server runs on port 8080 with base API path `/api`.
+### PostgreSQL
+Requires PostgreSQL. DB connection is configured via environment variables in NutriFit-backend.env (gitignored);
+* `DB_HOST`
+* `DB_PORT`
+* `DB_NAME`
+* `DB_USER`
+* `DB_PASSWORD`
 
-## Architecture
+### Server / API Base Path
+* Server port: **8080**
+* Base API path: `/api`
 
-**Stack:** Java 21, Spring Boot 4.0.2, PostgreSQL, Maven, JWT (JJWT 0.12.6), Lombok.
+---
 
-**Package structure** (`src/main/java/com/phillipe/NutriFit/`): Each domain feature is a top-level package with `model/`, `controller/`, `service/`, `dao/`, `dto/`, and `config/` sub-packages.
+### Security & Authentication
+#### JWT (Stateless)
+* Stateless JWT authentication
+* Public endpoints: `/register` and `/login`
+* All other endpoints require:
+  * `Authorization: Bearer <token>`
 
-Domain packages:
-- **User** — Registration, login, JWT auth, Spring Security config. `JwtFilter` lives under `User/config/filter/`.
-- **MealLog** — Meal logging with embedded `MealFoodEntry` items. Uses interface + impl pattern (`MealLogService` / `MealLogServiceImpl`).
-- **WorkoutLog** — Skeleton only, not yet implemented.
+#### Token Details
+* Token expiry: **1 hour**
+* Password hashing: **BCrypt strength 12**
+* JWT secret key is **generated in-memory on startup (not persisted)**
+  *    Tokens invalidate when the server restarts.
 
-**Authentication:** Stateless JWT. `/register` and `/login` are public; all other endpoints require `Authorization: Bearer <token>`. Tokens expire after 1 hour. Passwords are BCrypt-encoded (strength 12). JWT secret key is generated in-memory on startup (not persisted — tokens invalidate on restart).
+#### Spring Security Configuration
+* Security config lives in: `User/config/SecurityConfig.java`
+* `JwtFilter` lives in: `User/config/filter/`
+* CSRF is disabled (API-only)
+* Session policy is stateless
 
-**Security config** is in `User/config/SecurityConfig.java`. CSRF disabled (API-only). Sessions are stateless.
+---
 
-**Database:** JPA/Hibernate with `ddl-auto=update` (auto-creates/updates tables). Relationships: User (1) → many MealLog; MealLog (1) → many MealFoodEntry (`@ElementCollection`).
+### Database & ORM
+#### JPA/Hibernate
+* Uses JPA/Hibernate
+* ddl-auto=update in dev (auto-creates/updates tables)
 
-## API Endpoints
+#### Relationships
+* User (1) → many MealLog
+* MealLog (1) → many MealFoodEntry via @ElementCollection
 
-All under `/api`:
-- `POST /register` — public, creates user
-- `POST /login` — public, returns JWT token
-- `POST /meals` — authenticated, creates meal log with food items
-- `GET /meals/mine` — authenticated, returns current user's meals (newest first)
+#### Persistence Rules & Conventions
+* Prefer DTOs at the API boundary
+  * Don’t return entities directly from controllers unless explicitly intended.
 
-## Conventions
+* Use LAZY by default for relationships like @ManyToOne(fetch = LAZY)
+* Avoid JSON recursion
+  * Prefer mapping to DTOs; only use Jackson annotations if unavoidable.
+* Use UTC timestamps
+  * Prefer Instant for createdAt/updatedAt style fields.
 
-- Lombok annotations (`@Data`, `@Builder`, `@Getter`, `@Setter`) on models and DTOs.
-- Request/response DTOs in `dto/request/` and `dto/response/` within each domain package.
-- Repositories extend `JpaRepository` in `dao/` packages.
-- Jakarta validation (`@NotEmpty`, `@NotBlank`, `@Valid`) for request validation.
+---
+
+### API Endpoints
+
+All endpoints are under `/api`:
+* `POST /register` — public, creates user
+* `POST /login` — public, returns JWT token
+* `POST /meals` — authenticated, creates meal log with food items
+* `GET /meals/mine` — authenticated, returns current user's meals (newest first)
+
+---
+
+### Code Patterns & Conventions
+#### Lombok
+* Lombok annotations are used on models and DTOs:
+  * `@Data`, `@Builder`, `@Getter`, `@Setter`
+* Note: avoid Lombok patterns that interfere with JPA proxying or required constructors.
+
+#### DTO Organization
+Within each domain package:
+* Request DTOs: `dto/request/`
+* Response DTOs: `dto/response/`
+
+#### Repository Pattern
+* Repositories live in each domain’s `dao/` package
+* Repositories extend `JpaRepository`
+
+#### Validation
+Use Jakarta validation on request DTOs and controller inputs:
+* `@NotEmpty`, `@NotBlank`, `@Valid`
+
+---
+
+### Testing 
+#### Testing Frameworks
+* JUnit 5 (Jupiter)
+* Mockito for mocking
+* Spring Boot Test only when needed (prefer pure unit tests)
+
+#### Mandatory Rule: Add/Update Unit Tests with Every Change
+When creating or modifying any backend file, Claude must also create or update
+corresponding unit tests (using Mockito) unless the change is purely
+formatting/comments.
+
+#### Test Location & Naming
+##### Place tests under:
+`src/test/java/com/phillipe/NutriFit/`
+Mirror the production package structure and naming:
+* Class under .../service/... → test under .../service/...
+* Test naming: {ClassName}Test
+
+Examples:
+* MealLogServiceImpl → MealLogServiceImplTest
+* UserService (impl) → UserServiceImplTest
+### What to Test (by layer)
+Services (Highest Priority)
+* Unit test all service implementations using Mockito
+* Mock repositories (dao/) and external dependencies
+* Verify:
+  * returned values 
+  * error/exception paths 
+  * interactions (`verify(...)`, `verifyNoMoreInteractions(...)`)
+  * edge cases (null/empty inputs, auth user missing, etc.)
+
+#### Controllers (Unit-Style)
+Prefer unit-style controller tests without starting the server:
+* Instantiate controller with mocked service(s)
+* If testing Spring MVC mappings is necessary, use @WebMvcTest
+sparingly (still mock the service layer).
+
+#### Repositories
+* Do not write Mockito unit tests for pure JpaRepository interfaces.
+* If a repository has custom query logic that must be validated, prefer
+an integration test with Testcontainers (optional; only if requested).
+
+#### Models / DTOs
+* Do NOT write unit tests for simple Lombok getters/setters/builders.
+* Only test models/DTOs if they contain non-trivial logic.
+
+#### Mockito Patters (Preferred)
+Use JUnit 5 + Mockito extension:
+```
+@ExtendWith(MockitoExtension.class)
+class MealLogServiceImplTest {
+
+  @Mock
+  private MealLogRepository mealLogRepository;
+
+  @Mock
+  private UserRepository userRepository;
+
+  @InjectMocks
+  private MealLogServiceImpl service;
+
+  @Test
+  void createMeal_shouldPersistMealForUser() {
+    // arrange
+    // when(...).thenReturn(...)
+
+    // act
+    // service.createMeal(...)
+
+    // assert
+    // verify(...)
+  }
+}
+
+```
+Rules:
+* Use @ExtendWith(MockitoExtension.class) (not MockitoAnnotations.openMocks)
+* Prefer when(...).thenReturn(...) and verify(...)
+* Use ArgumentCaptor when verifying complex objects
+* Assert using JUnit assertions (assertEquals, assertThrows, etc.)
+
+Coverage Expectations
+* Every service implementation should have tests covering:
+  * happy path
+  * at least one failure path
+  * at least one edge case
+* Keep tests fast and deterministic (no DB/network).
+
+How to  run tests
+```
+./mvnw test
+```
+
+---
+
+### Guidelines for Code Changes
+#### When Adding New Features
+1. Start with DTOs + service behavior
+2. Update entities and relationships only as needed
+3. Implement or adjust repositories (queries) in dao/
+4. Add controller endpoints with proper auth rules
+5. Add validation (jakarta.validation) for request DTOs
+6. Provide curl/Postman examples for new/changed endpoints
+7. Add/adjust tests when practical
+
+#### “Don’t surprise me” rules
+* Don’t rename packages/folders broadly unless asked.
+* Don’t introduce new frameworks/dependencies unless necessary.
+* Keep diffs small and focused.
+
+#### If uncertain
+
+Ask whether the user wants:
+* a quick patch
+* or a proper refactor
+Prefer existing patterns already established in the repo.
+
+---
