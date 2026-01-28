@@ -38,3 +38,29 @@ export interface MealLogResponse {
   totalFats: number;
   foods: FoodItem[];
 }
+
+// === Workouts ===
+
+export interface ExerciseItem {
+  name: string;
+  category: string | null;
+  durationMinutes: number | null;
+  sets: number | null;
+  reps: number | null;
+  weight: number | null;
+  caloriesBurned: number | null;
+}
+
+export interface WorkoutLogRequest {
+  exercises: ExerciseItem[];
+}
+
+export interface WorkoutLogResponse {
+  id: number;
+  createdAt: string;
+  totalDurationMinutes: number;
+  totalCaloriesBurned: number;
+  totalSets: number;
+  totalReps: number;
+  exercises: ExerciseItem[];
+}

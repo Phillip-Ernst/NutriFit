@@ -8,6 +8,8 @@ import DashboardPage from '../pages/DashboardPage';
 import MealLogPage from '../pages/MealLogPage';
 import MealHistoryPage from '../pages/MealHistoryPage';
 import WorkoutsPage from '../pages/WorkoutsPage';
+import WorkoutLogPage from '../pages/WorkoutLogPage';
+import WorkoutHistoryPage from '../pages/WorkoutHistoryPage';
 import ProfilePage from '../pages/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -24,6 +26,8 @@ export default function AppRouter() {
           <Route path="/meals/log" element={<MealLogPage />} />
           <Route path="/meals/history" element={<MealHistoryPage />} />
           <Route path="/workouts" element={<WorkoutsPage />} />
+          <Route path="/workouts/log" element={<WorkoutLogPage />} />
+          <Route path="/workouts/history" element={<WorkoutHistoryPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
