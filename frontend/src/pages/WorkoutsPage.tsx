@@ -39,6 +39,15 @@ export default function WorkoutsPage() {
           </svg>
           View History
         </Link>
+        <Link
+          to="/workouts/plans"
+          className="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          My Plans
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

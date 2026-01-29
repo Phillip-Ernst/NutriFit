@@ -10,6 +10,11 @@ import MealHistoryPage from '../pages/MealHistoryPage';
 import WorkoutsPage from '../pages/WorkoutsPage';
 import WorkoutLogPage from '../pages/WorkoutLogPage';
 import WorkoutHistoryPage from '../pages/WorkoutHistoryPage';
+import WorkoutPlansPage from '../pages/WorkoutPlansPage';
+import CreatePlanPage from '../pages/CreatePlanPage';
+import PlanDetailPage from '../pages/PlanDetailPage';
+import EditPlanPage from '../pages/EditPlanPage';
+import ExecuteWorkoutPage from '../pages/ExecuteWorkoutPage';
 import ProfilePage from '../pages/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -28,6 +33,11 @@ export default function AppRouter() {
           <Route path="/workouts" element={<WorkoutsPage />} />
           <Route path="/workouts/log" element={<WorkoutLogPage />} />
           <Route path="/workouts/history" element={<WorkoutHistoryPage />} />
+          <Route path="/workouts/plans" element={<WorkoutPlansPage />} />
+          <Route path="/workouts/plans/new" element={<CreatePlanPage />} />
+          <Route path="/workouts/plans/:id" element={<PlanDetailPage />} />
+          <Route path="/workouts/plans/:id/edit" element={<EditPlanPage />} />
+          <Route path="/workouts/execute/:dayId" element={<ExecuteWorkoutPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>

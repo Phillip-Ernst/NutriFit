@@ -19,5 +19,8 @@ public class WorkoutLogResponse {
     private Integer totalSets;
     private Integer totalReps;
 
+    private Long workoutPlanDayId;
+    private String workoutPlanDayName;
+
     private List<ExerciseItemRequest> exercises;
 }

@@ -11,6 +11,8 @@ const mockWorkout: WorkoutLogResponse = {
   totalCaloriesBurned: 300,
   totalSets: 12,
   totalReps: 120,
+  workoutPlanDayId: null,
+  workoutPlanDayName: null,
   exercises: [
     {
       name: 'Bench Press',

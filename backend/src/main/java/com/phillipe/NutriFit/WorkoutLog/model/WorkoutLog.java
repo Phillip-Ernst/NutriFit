@@ -1,6 +1,7 @@
 package com.phillipe.NutriFit.WorkoutLog.model;
 
 import com.phillipe.NutriFit.User.model.User;
+import com.phillipe.NutriFit.WorkoutPlan.model.WorkoutPlanDay;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,6 +25,10 @@ public class WorkoutLog {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workout_plan_day_id")
+    private WorkoutPlanDay workoutPlanDay;
 
     @Builder.Default
     @Column(nullable = false)
