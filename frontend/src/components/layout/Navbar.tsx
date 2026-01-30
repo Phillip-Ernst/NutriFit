@@ -7,6 +7,7 @@ const links = [
   { to: '/meals/log', label: 'Log Meal' },
   { to: '/meals/history', label: 'History' },
   { to: '/workouts', label: 'Workouts' },
+  { to: '/workouts/plans', label: 'Plans' },
 ];
 
 export default function Navbar() {

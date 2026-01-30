@@ -3,59 +3,96 @@
 ## Project Overview
 
 NutriFit is a Java Spring Boot backend API for a nutrition + fitness tracking app.
-It manages users, authentication, meal logging (with embedded food entries), and
-will later include workout logging.
+It manages users, authentication, meal logging (with embedded food entries), workout
+logging, and workout plan templates.
 
 The backend is a Maven-based Spring Boot app with PostgreSQL persistence, stateless
-JWT auth, and a domain-based package organization.
+JWT auth, and a traditional layered package organization.
 
 ---
 
 ## Architecture Patterns
 
-### 1. Domain-Feature Modular Packaging
+### 1. Traditional Layered Package Structure
 
-The codebase is organized by **domain feature**. Each domain is a top-level
-package under:
+The codebase is organized by **layer/responsibility**. All packages are under:
 
 `src/main/java/com/phillipe/NutriFit/`
 
-Each domain follows a consistent sub-package structure:
 ```
-com/phillipe/NutriFit/{Domain}/
-├── model/          # JPA entities / embedded types
-├── controller/     # REST controllers
-├── service/        # Business logic (interfaces + implementations)
-├── dao/            # Spring Data repositories (JpaRepository)
-├── dto/            # API contracts (request/response DTOs)
-└── config/         # Domain config (security/filter/etc.)
+com/phillipe/NutriFit/
+├── NutriFitApplication.java
+├── config/                    # Configuration classes
+│   ├── SecurityConfig.java
+│   └── filter/
+│       └── JwtFilter.java
+├── controller/                # REST controllers
+│   ├── UserController.java
+│   ├── MealLogController.java
+│   ├── WorkoutLogController.java
+│   ├── WorkoutPlanController.java
+│   └── ExerciseController.java
+├── service/                   # Business logic (interfaces + implementations)
+│   ├── JwtService.java
+│   ├── MyUserDetailsService.java
+│   ├── UserService.java
+│   ├── MealLogService.java
+│   ├── MealLogServiceImpl.java
+│   ├── WorkoutLogService.java
+│   ├── WorkoutLogServiceImpl.java
+│   ├── WorkoutPlanService.java
+│   └── WorkoutPlanServiceImpl.java
+├── repository/                # Spring Data repositories
+│   ├── UserRepository.java
+│   ├── MealLogRepository.java
+│   ├── WorkoutLogRepository.java
+│   ├── WorkoutPlanRepository.java
+│   └── WorkoutPlanDayRepository.java
+├── model/                     # Domain models
+│   ├── ExerciseCategory.java        # Enum
+│   ├── PredefinedExercise.java      # Enum
+│   ├── entity/                      # JPA entities
+│   │   ├── User.java
+│   │   ├── MealLog.java
+│   │   ├── WorkoutLog.java
+│   │   ├── WorkoutPlan.java
+│   │   └── WorkoutPlanDay.java
+│   └── embedded/                    # Embeddable types
+│       ├── MealFoodEntry.java
+│       ├── WorkoutExerciseEntry.java
+│       └── WorkoutPlanExercise.java
+├── dto/                       # API contracts
+│   ├── request/
+│   │   ├── FoodItemRequest.java
+│   │   ├── MealLogRequest.java
+│   │   ├── ExerciseItemRequest.java
+│   │   ├── WorkoutLogRequest.java
+│   │   ├── WorkoutLogFromPlanRequest.java
+│   │   ├── WorkoutPlanRequest.java
+│   │   ├── WorkoutPlanDayRequest.java
+│   │   └── WorkoutPlanExerciseRequest.java
+│   └── response/
+│       ├── MealLogResponse.java
+│       ├── WorkoutLogResponse.java
+│       ├── WorkoutPlanResponse.java
+│       ├── WorkoutPlanDayResponse.java
+│       ├── WorkoutPlanExerciseResponse.java
+│       └── PredefinedExerciseResponse.java
+└── security/                  # Security-related classes
+    └── UserPrincipal.java
 ```
 
+### 2. Layered Responsibility
 
-#### Current domains
+Responsibilities are separated by layer:
 
-- **User**
-    - Registration + login
-    - JWT auth + Spring Security configuration
-    - `JwtFilter` lives in `User/config/filter/`
-    - Security config lives in `User/config/SecurityConfig.java`
-
-- **MealLog**
-    - Meal logging with embedded `MealFoodEntry` items
-    - Uses interface + impl pattern: `MealLogService` / `MealLogServiceImpl`
-
-- **WorkoutLog**
-    - Skeleton only, not implemented yet
-
-### 2. Layered Responsibility (Pragmatic Clean-ish Layers)
-
-While this is not strict “Clean Architecture,” keep responsibilities separated:
-
-- **Model layer (`model/`)**: persistence entities + embedded types
+- **Model layer (`model/`)**: persistence entities (`entity/`), embedded types (`embedded/`), enums
 - **DTO layer (`dto/`)**: request/response shapes (API boundary)
 - **Service layer (`service/`)**: business logic (main unit of behavior)
 - **Controller layer (`controller/`)**: HTTP routing + auth principal extraction
-- **DAO layer (`dao/`)**: persistence access with Spring Data
+- **Repository layer (`repository/`)**: persistence access with Spring Data
+- **Config layer (`config/`)**: Spring configuration, security, filters
+- **Security layer (`security/`)**: authentication-related classes
 
 ---
 
@@ -113,8 +150,8 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
   *    Tokens invalidate when the server restarts.
 
 #### Spring Security Configuration
-* Security config lives in: `User/config/SecurityConfig.java`
-* `JwtFilter` lives in: `User/config/filter/`
+* Security config lives in: `config/SecurityConfig.java`
+* `JwtFilter` lives in: `config/filter/JwtFilter.java`
 * CSRF is disabled (API-only)
 * Session policy is stateless
 
@@ -127,11 +164,17 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 
 #### Relationships
 * User (1) → many MealLog
+* User (1) → many WorkoutLog
+* User (1) → many WorkoutPlan
+* WorkoutPlan (1) → many WorkoutPlanDay
+* WorkoutLog → optional WorkoutPlanDay
 * MealLog (1) → many MealFoodEntry via @ElementCollection
+* WorkoutLog (1) → many WorkoutExerciseEntry via @ElementCollection
+* WorkoutPlanDay (1) → many WorkoutPlanExercise via @ElementCollection
 
 #### Persistence Rules & Conventions
 * Prefer DTOs at the API boundary
-  * Don’t return entities directly from controllers unless explicitly intended.
+  * Don't return entities directly from controllers unless explicitly intended.
 
 * Use LAZY by default for relationships like @ManyToOne(fetch = LAZY)
 * Avoid JSON recursion
@@ -144,10 +187,31 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 ### API Endpoints
 
 All endpoints are under `/api`:
+
+**User/Auth:**
 * `POST /register` — public, creates user
 * `POST /login` — public, returns JWT token
+
+**Meals:**
 * `POST /meals` — authenticated, creates meal log with food items
 * `GET /meals/mine` — authenticated, returns current user's meals (newest first)
+
+**Workouts:**
+* `POST /workouts` — authenticated, creates workout log
+* `POST /workouts/from-plan` — authenticated, creates workout from plan day
+* `GET /workouts/mine` — authenticated, returns current user's workouts
+
+**Workout Plans:**
+* `POST /workout-plans` — authenticated, creates workout plan
+* `GET /workout-plans/mine` — authenticated, returns current user's plans
+* `GET /workout-plans/{id}` — authenticated, returns specific plan
+* `PUT /workout-plans/{id}` — authenticated, updates plan
+* `DELETE /workout-plans/{id}` — authenticated, deletes plan
+* `GET /workout-plans/days/{dayId}` — authenticated, returns specific day
+
+**Exercises:**
+* `GET /exercises/predefined` — returns predefined exercises (optional category filter)
+* `GET /exercises/categories` — returns all exercise categories
 
 ---
 
@@ -158,13 +222,13 @@ All endpoints are under `/api`:
 * Note: avoid Lombok patterns that interfere with JPA proxying or required constructors.
 
 #### DTO Organization
-Within each domain package:
 * Request DTOs: `dto/request/`
 * Response DTOs: `dto/response/`
 
 #### Repository Pattern
-* Repositories live in each domain’s `dao/` package
+* Repositories live in `repository/` package
 * Repositories extend `JpaRepository`
+* Named with `*Repository` suffix (e.g., `UserRepository`)
 
 #### Validation
 Use Jakarta validation on request DTOs and controller inputs:
@@ -172,7 +236,7 @@ Use Jakarta validation on request DTOs and controller inputs:
 
 ---
 
-### Testing 
+### Testing
 #### Testing Frameworks
 * JUnit 5 (Jupiter)
 * Mockito for mocking
@@ -192,14 +256,14 @@ Mirror the production package structure and naming:
 
 Examples:
 * MealLogServiceImpl → MealLogServiceImplTest
-* UserService (impl) → UserServiceImplTest
+* UserService → UserServiceTest
 ### What to Test (by layer)
 Services (Highest Priority)
 * Unit test all service implementations using Mockito
-* Mock repositories (dao/) and external dependencies
+* Mock repositories and external dependencies
 * Verify:
-  * returned values 
-  * error/exception paths 
+  * returned values
+  * error/exception paths
   * interactions (`verify(...)`, `verifyNoMoreInteractions(...)`)
   * edge cases (null/empty inputs, auth user missing, etc.)
 
@@ -218,7 +282,7 @@ an integration test with Testcontainers (optional; only if requested).
 * Do NOT write unit tests for simple Lombok getters/setters/builders.
 * Only test models/DTOs if they contain non-trivial logic.
 
-#### Mockito Patters (Preferred)
+#### Mockito Patterns (Preferred)
 Use JUnit 5 + Mockito extension:
 ```
 @ExtendWith(MockitoExtension.class)
@@ -271,15 +335,15 @@ How to  run tests
 #### When Adding New Features
 1. Start with DTOs + service behavior
 2. Update entities and relationships only as needed
-3. Implement or adjust repositories (queries) in dao/
+3. Implement or adjust repositories (queries) in repository/
 4. Add controller endpoints with proper auth rules
 5. Add validation (jakarta.validation) for request DTOs
 6. Provide curl/Postman examples for new/changed endpoints
 7. Add/adjust tests when practical
 
-#### “Don’t surprise me” rules
-* Don’t rename packages/folders broadly unless asked.
-* Don’t introduce new frameworks/dependencies unless necessary.
+#### "Don't surprise me" rules
+* Don't rename packages/folders broadly unless asked.
+* Don't introduce new frameworks/dependencies unless necessary.
 * Keep diffs small and focused.
 
 #### If uncertain
