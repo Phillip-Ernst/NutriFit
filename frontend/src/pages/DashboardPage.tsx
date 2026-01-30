@@ -1,14 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useMyMeals } from '../hooks/useMeals';
+import { useMyWorkouts } from '../hooks/useWorkouts';
 import NutritionSummary from '../components/meals/NutritionSummary';
 import MealCard from '../components/meals/MealCard';
+import WorkoutCard from '../components/workouts/WorkoutCard';
 import Card from '../components/ui/Card';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function DashboardPage() {
   const { username } = useAuth();
-  const { data: meals, isLoading } = useMyMeals();
+  const { data: meals, isLoading: mealsLoading } = useMyMeals();
+  const { data: workouts, isLoading: workoutsLoading } = useMyWorkouts();
+
+  const isLoading = mealsLoading || workoutsLoading;
+  const mostRecentWorkout = workouts?.[0];
 
   return (
     <div className="space-y-8">
@@ -40,21 +46,46 @@ export default function DashboardPage() {
                 </div>
               </Card>
             </Link>
-            <Link to="/meals/history">
+            <Link to="/workouts/log">
               <Card className="hover:border-emerald-500/50 transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className="bg-emerald-500/10 rounded-lg p-3">
                     <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-white">View History</p>
-                    <p className="text-sm text-gray-400">Browse all your logged meals</p>
+                    <p className="font-semibold text-white">Log a Workout</p>
+                    <p className="text-sm text-gray-400">Track your exercises and progress</p>
                   </div>
                 </div>
               </Card>
             </Link>
+          </div>
+
+          {/* Recent Workouts */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">Recent Workout</h2>
+              {workouts && workouts.length > 0 && (
+                <Link to="/workouts/history" className="text-sm text-emerald-400 hover:text-emerald-300">
+                  View All
+                </Link>
+              )}
+            </div>
+            {mostRecentWorkout ? (
+              <WorkoutCard workout={mostRecentWorkout} />
+            ) : (
+              <Card>
+                <p className="text-gray-400 text-center py-4">
+                  No workouts logged yet. Start by{' '}
+                  <Link to="/workouts/log" className="text-emerald-400 hover:text-emerald-300">
+                    logging your first workout
+                  </Link>
+                  .
+                </p>
+              </Card>
+            )}
           </div>
 
           {/* Recent Meals */}
