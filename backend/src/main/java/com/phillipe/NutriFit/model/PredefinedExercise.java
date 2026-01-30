@@ -155,6 +155,7 @@ public enum PredefinedExercise {
 
     // Cardio exercises
     RUNNING("Running", ExerciseCategory.CARDIO),
+    WALKING("Walking", ExerciseCategory.CARDIO),
     CYCLING("Cycling", ExerciseCategory.CARDIO),
     ROWING("Rowing", ExerciseCategory.CARDIO),
     JUMP_ROPE("Jump Rope", ExerciseCategory.CARDIO),
