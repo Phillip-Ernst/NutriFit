@@ -86,56 +86,63 @@ export default function ExecuteWorkoutForm({ planDay }: ExecuteWorkoutFormProps)
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Sets</label>
-                <input
-                  type="number"
-                  value={exercise.sets ?? ''}
-                  onChange={(e) => handleChange(i, 'sets', e.target.value)}
-                  min="0"
-                  className="w-16 bg-gray-700 border border-gray-600 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Reps</label>
-                <input
-                  type="number"
-                  value={exercise.reps ?? ''}
-                  onChange={(e) => handleChange(i, 'reps', e.target.value)}
-                  min="0"
-                  className="w-16 bg-gray-700 border border-gray-600 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Weight</label>
-                <input
-                  type="number"
-                  value={exercise.weight ?? ''}
-                  onChange={(e) => handleChange(i, 'weight', e.target.value)}
-                  min="0"
-                  className="w-20 bg-gray-700 border border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Mins</label>
-                <input
-                  type="number"
-                  value={exercise.durationMinutes ?? ''}
-                  onChange={(e) => handleChange(i, 'durationMinutes', e.target.value)}
-                  min="0"
-                  className="w-16 bg-gray-700 border border-gray-600 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Cals</label>
-                <input
-                  type="number"
-                  value={exercise.caloriesBurned ?? ''}
-                  onChange={(e) => handleChange(i, 'caloriesBurned', e.target.value)}
-                  min="0"
-                  className="w-16 bg-gray-700 border border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                />
-              </div>
+              {exercise.category?.toUpperCase() === 'CARDIO' ? (
+                <>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Duration (mins)</label>
+                    <input
+                      type="number"
+                      value={exercise.durationMinutes ?? ''}
+                      onChange={(e) => handleChange(i, 'durationMinutes', e.target.value)}
+                      min="0"
+                      className="w-28 bg-gray-700 border border-gray-600 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Calories Burned</label>
+                    <input
+                      type="number"
+                      value={exercise.caloriesBurned ?? ''}
+                      onChange={(e) => handleChange(i, 'caloriesBurned', e.target.value)}
+                      min="0"
+                      className="w-28 bg-gray-700 border border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Sets</label>
+                    <input
+                      type="number"
+                      value={exercise.sets ?? ''}
+                      onChange={(e) => handleChange(i, 'sets', e.target.value)}
+                      min="0"
+                      className="w-16 bg-gray-700 border border-gray-600 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Reps</label>
+                    <input
+                      type="number"
+                      value={exercise.reps ?? ''}
+                      onChange={(e) => handleChange(i, 'reps', e.target.value)}
+                      min="0"
+                      className="w-16 bg-gray-700 border border-gray-600 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Weight</label>
+                    <input
+                      type="number"
+                      value={exercise.weight ?? ''}
+                      onChange={(e) => handleChange(i, 'weight', e.target.value)}
+                      min="0"
+                      className="w-20 bg-gray-700 border border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ))}

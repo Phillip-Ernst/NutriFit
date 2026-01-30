@@ -64,20 +64,27 @@ export default function WorkoutCard({ workout }: { workout: WorkoutLogResponse }
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 text-gray-400">
-                  {exercise.sets !== null && (
-                    <span className="text-purple-400">{exercise.sets}s</span>
-                  )}
-                  {exercise.reps !== null && (
-                    <span className="text-pink-400">{exercise.reps}r</span>
-                  )}
-                  {exercise.weight !== null && (
-                    <span className="text-amber-400">{exercise.weight}lbs</span>
-                  )}
-                  {isCardio && exercise.durationMinutes !== null && (
-                    <span className="text-blue-400">{exercise.durationMinutes}min</span>
-                  )}
-                  {isCardio && exercise.caloriesBurned !== null && (
-                    <span className="text-orange-400">{exercise.caloriesBurned}cal</span>
+                  {isCardio ? (
+                    <>
+                      {exercise.durationMinutes !== null && (
+                        <span className="text-blue-400">{exercise.durationMinutes}min</span>
+                      )}
+                      {exercise.caloriesBurned !== null && (
+                        <span className="text-orange-400">{exercise.caloriesBurned}cal</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {exercise.sets !== null && (
+                        <span className="text-purple-400">{exercise.sets}s</span>
+                      )}
+                      {exercise.reps !== null && (
+                        <span className="text-pink-400">{exercise.reps}r</span>
+                      )}
+                      {exercise.weight !== null && (
+                        <span className="text-amber-400">{exercise.weight}lbs</span>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

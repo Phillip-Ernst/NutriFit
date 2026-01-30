@@ -15,6 +15,8 @@ export default function ExerciseItemRow({
   onRemove,
   canRemove,
 }: ExerciseItemRowProps) {
+  const isCardio = exercise.category?.toUpperCase() === 'CARDIO';
+
   return (
     <div className="flex flex-col gap-2 p-3 bg-gray-800 rounded-lg">
       <div className="flex flex-col sm:flex-row gap-2">
@@ -35,46 +37,53 @@ export default function ExerciseItemRow({
         />
       </div>
       <div className="flex flex-wrap gap-2">
-        <input
-          type="number"
-          placeholder="Sets"
-          value={exercise.sets ?? ''}
-          onChange={(e) => onChange(index, 'sets', e.target.value)}
-          min="0"
-          className="w-16 bg-gray-700 border border-gray-600 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
-        />
-        <input
-          type="number"
-          placeholder="Reps"
-          value={exercise.reps ?? ''}
-          onChange={(e) => onChange(index, 'reps', e.target.value)}
-          min="0"
-          className="w-16 bg-gray-700 border border-gray-600 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
-        />
-        <input
-          type="number"
-          placeholder="Weight"
-          value={exercise.weight ?? ''}
-          onChange={(e) => onChange(index, 'weight', e.target.value)}
-          min="0"
-          className="w-20 bg-gray-700 border border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
-        />
-        <input
-          type="number"
-          placeholder="Mins"
-          value={exercise.durationMinutes ?? ''}
-          onChange={(e) => onChange(index, 'durationMinutes', e.target.value)}
-          min="0"
-          className="w-16 bg-gray-700 border border-gray-600 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
-        />
-        <input
-          type="number"
-          placeholder="Cals"
-          value={exercise.caloriesBurned ?? ''}
-          onChange={(e) => onChange(index, 'caloriesBurned', e.target.value)}
-          min="0"
-          className="w-16 bg-gray-700 border border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
-        />
+        {isCardio ? (
+          <>
+            <input
+              type="number"
+              placeholder="Duration (mins)"
+              value={exercise.durationMinutes ?? ''}
+              onChange={(e) => onChange(index, 'durationMinutes', e.target.value)}
+              min="0"
+              className="w-32 bg-gray-700 border border-gray-600 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
+            />
+            <input
+              type="number"
+              placeholder="Calories Burned"
+              value={exercise.caloriesBurned ?? ''}
+              onChange={(e) => onChange(index, 'caloriesBurned', e.target.value)}
+              min="0"
+              className="w-32 bg-gray-700 border border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
+            />
+          </>
+        ) : (
+          <>
+            <input
+              type="number"
+              placeholder="Sets"
+              value={exercise.sets ?? ''}
+              onChange={(e) => onChange(index, 'sets', e.target.value)}
+              min="0"
+              className="w-16 bg-gray-700 border border-gray-600 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
+            />
+            <input
+              type="number"
+              placeholder="Reps"
+              value={exercise.reps ?? ''}
+              onChange={(e) => onChange(index, 'reps', e.target.value)}
+              min="0"
+              className="w-16 bg-gray-700 border border-gray-600 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
+            />
+            <input
+              type="number"
+              placeholder="Weight"
+              value={exercise.weight ?? ''}
+              onChange={(e) => onChange(index, 'weight', e.target.value)}
+              min="0"
+              className="w-20 bg-gray-700 border border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-white rounded-md px-2 py-2 text-sm outline-none placeholder:text-gray-500"
+            />
+          </>
+        )}
         {canRemove && (
           <button
             type="button"

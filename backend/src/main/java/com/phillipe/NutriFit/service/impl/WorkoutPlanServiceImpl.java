@@ -1,6 +1,7 @@
 package com.phillipe.NutriFit.service.impl;
 
 import com.phillipe.NutriFit.repository.UserRepository;
+import com.phillipe.NutriFit.repository.WorkoutLogRepository;
 import com.phillipe.NutriFit.model.entity.User;
 import com.phillipe.NutriFit.repository.WorkoutPlanDayRepository;
 import com.phillipe.NutriFit.repository.WorkoutPlanRepository;
@@ -30,13 +31,16 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
 
     private final WorkoutPlanRepository workoutPlanRepo;
     private final WorkoutPlanDayRepository workoutPlanDayRepo;
+    private final WorkoutLogRepository workoutLogRepo;
     private final UserRepository userRepo;
 
     public WorkoutPlanServiceImpl(WorkoutPlanRepository workoutPlanRepo,
                                    WorkoutPlanDayRepository workoutPlanDayRepo,
+                                   WorkoutLogRepository workoutLogRepo,
                                    UserRepository userRepo) {
         this.workoutPlanRepo = workoutPlanRepo;
         this.workoutPlanDayRepo = workoutPlanDayRepo;
+        this.workoutLogRepo = workoutLogRepo;
         this.userRepo = userRepo;
     }
 
@@ -99,6 +103,15 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         plan.setName(request.getName());
         plan.setDescription(request.getDescription());
 
+        // Clear FK references in workout_log before removing days (to avoid constraint violation)
+        List<Long> existingDayIds = plan.getDays().stream()
+                .map(WorkoutPlanDay::getId)
+                .filter(dayId -> dayId != null)
+                .toList();
+        if (!existingDayIds.isEmpty()) {
+            workoutLogRepo.clearWorkoutPlanDayReferences(existingDayIds);
+        }
+
         // Clear existing days and add new ones
         plan.getDays().clear();
 
@@ -119,6 +132,16 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         User user = findUserOrThrow(username);
         WorkoutPlan plan = workoutPlanRepo.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Workout plan not found"));
+
+        // Clear FK references in workout_log before deleting (to avoid constraint violation)
+        List<Long> dayIds = plan.getDays().stream()
+                .map(WorkoutPlanDay::getId)
+                .filter(dayId -> dayId != null)
+                .toList();
+        if (!dayIds.isEmpty()) {
+            workoutLogRepo.clearWorkoutPlanDayReferences(dayIds);
+        }
+
         workoutPlanRepo.delete(plan);
     }
 
