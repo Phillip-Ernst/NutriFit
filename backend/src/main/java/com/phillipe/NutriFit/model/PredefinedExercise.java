@@ -6,25 +6,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum PredefinedExercise {
-    // Back exercises
-    PULL_UP("Pull-up", ExerciseCategory.BACK),
-    CHIN_UP("Chin-up", ExerciseCategory.BACK),
-    LAT_PULLDOWN("Lat Pulldown", ExerciseCategory.BACK),
-    BARBELL_ROW("Barbell Row", ExerciseCategory.BACK),
-    DUMBBELL_ROW("Dumbbell Row", ExerciseCategory.BACK),
-    SMITH_MACHINE_BARBELL_ROW("Smith Machine Barbell Row", ExerciseCategory.BACK),
-    SMITH_MACHINE_DEADLIFT("Smith Machine Deadlift", ExerciseCategory.BACK),
-    CHEST_SUPPORTED_ROW("Chest-Supported Row", ExerciseCategory.BACK),
-    CABLE_ROW("Cable Row", ExerciseCategory.BACK),
-    DEADLIFT("Deadlift", ExerciseCategory.BACK),
-    T_BAR_ROW("T-Bar Row", ExerciseCategory.BACK),
-    FACE_PULL("Face Pull", ExerciseCategory.BACK),
-    PULLDOWN_NEUTRAL_GRIP("Neutral-Grip Pulldown", ExerciseCategory.BACK),
-    STRAIGHT_ARM_PULLDOWN("Straight-Arm Pulldown", ExerciseCategory.BACK),
-    SINGLE_ARM_LAT_PULLDOWN("Single-Arm Lat Pulldown", ExerciseCategory.BACK),
-    INVERTED_ROW("Inverted Row", ExerciseCategory.BACK),
-    MEADOWS_ROW("Meadows Row", ExerciseCategory.BACK),
-    BACK_EXTENSION("Back Extension", ExerciseCategory.BACK),
 
     // Chest exercises
     BENCH_PRESS("Bench Press", ExerciseCategory.CHEST),
@@ -44,6 +25,27 @@ public enum PredefinedExercise {
     MACHINE_FLY("Machine Fly", ExerciseCategory.CHEST),
     CABLE_CROSSOVER("Cable Crossover", ExerciseCategory.CHEST),
     DIP("Dip", ExerciseCategory.CHEST),
+
+    // Back exercises
+    PULL_UP("Pull-up", ExerciseCategory.BACK),
+    CHIN_UP("Chin-up", ExerciseCategory.BACK),
+    LAT_PULLDOWN("Lat Pulldown", ExerciseCategory.BACK),
+    CLOSE_GRIP_LAT_PULLDOWN("Close-crip Lat Pulldown", ExerciseCategory.BACK),
+    BARBELL_ROW("Barbell Row", ExerciseCategory.BACK),
+    DUMBBELL_ROW("Dumbbell Row", ExerciseCategory.BACK),
+    SMITH_MACHINE_BARBELL_ROW("Smith Machine Barbell Row", ExerciseCategory.BACK),
+    SMITH_MACHINE_DEADLIFT("Smith Machine Deadlift", ExerciseCategory.BACK),
+    CHEST_SUPPORTED_ROW("Chest-Supported Row", ExerciseCategory.BACK),
+    CABLE_ROW("Cable Row", ExerciseCategory.BACK),
+    DEADLIFT("Deadlift", ExerciseCategory.BACK),
+    T_BAR_ROW("T-Bar Row", ExerciseCategory.BACK),
+    FACE_PULL("Face Pull", ExerciseCategory.BACK),
+    PULLDOWN_NEUTRAL_GRIP("Neutral-Grip Pulldown", ExerciseCategory.BACK),
+    STRAIGHT_ARM_PULLDOWN("Straight-Arm Pulldown", ExerciseCategory.BACK),
+    SINGLE_ARM_LAT_PULLDOWN("Single-Arm Lat Pulldown", ExerciseCategory.BACK),
+    INVERTED_ROW("Inverted Row", ExerciseCategory.BACK),
+    MEADOWS_ROW("Meadows Row", ExerciseCategory.BACK),
+    BACK_EXTENSION("Back Extension", ExerciseCategory.BACK),
 
     // Biceps exercises
     BARBELL_CURL("Barbell Curl", ExerciseCategory.BICEPS),
