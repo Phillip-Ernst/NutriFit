@@ -11,6 +11,7 @@ public enum ExerciseCategory {
     GLUTES,
     CALVES,
     CORE,
+    FOREARMS,
     CARDIO,
     OTHER
 }
