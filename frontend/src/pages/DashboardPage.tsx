@@ -27,8 +27,6 @@ export default function DashboardPage() {
         <LoadingSpinner />
       ) : (
         <>
-          <NutritionSummary meals={meals || []} />
-
           {/* Quick Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link to="/meals/log">
@@ -62,6 +60,8 @@ export default function DashboardPage() {
               </Card>
             </Link>
           </div>
+
+          <NutritionSummary meals={meals || []} />
 
           {/* Recent Workouts */}
           <div>
