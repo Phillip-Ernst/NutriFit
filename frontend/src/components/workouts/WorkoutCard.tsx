@@ -8,13 +8,17 @@ function formatDate(iso: string): string {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
   });
+}
+
+function isCardioExercise(category: string | null): boolean {
+  return category?.toUpperCase() === 'CARDIO';
 }
 
 export default function WorkoutCard({ workout }: { workout: WorkoutLogResponse }) {
   const [expanded, setExpanded] = useState(false);
+
+  const hasCardio = workout.exercises.some((ex) => isCardioExercise(ex.category));
 
   return (
     <Card className="space-y-3">
@@ -22,12 +26,16 @@ export default function WorkoutCard({ workout }: { workout: WorkoutLogResponse }
         <div>
           <p className="text-sm text-gray-400">{formatDate(workout.createdAt)}</p>
           <p className="text-lg font-semibold text-white mt-1">
-            {workout.totalDurationMinutes}{' '}
-            <span className="text-sm font-normal text-gray-400">min</span>
+            {workout.workoutPlanDayName || 'Workout'}
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-sm text-gray-300">
-          <span className="text-orange-400">{workout.totalCaloriesBurned} cal</span>
+          {hasCardio && workout.totalCaloriesBurned > 0 && (
+            <span className="text-orange-400">{workout.totalCaloriesBurned} cal</span>
+          )}
+          {hasCardio && workout.totalDurationMinutes > 0 && (
+            <span className="text-blue-400">{workout.totalDurationMinutes} min</span>
+          )}
           <span className="text-purple-400">{workout.totalSets} sets</span>
           <span className="text-pink-400">{workout.totalReps} reps</span>
         </div>
@@ -43,35 +51,38 @@ export default function WorkoutCard({ workout }: { workout: WorkoutLogResponse }
 
       {expanded && (
         <div className="border-t border-gray-800 pt-3 space-y-2">
-          {workout.exercises.map((exercise, i) => (
-            <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm gap-1">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-200 font-medium">{exercise.name}</span>
-                {exercise.category && (
-                  <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-                    {exercise.category}
-                  </span>
-                )}
+          {workout.exercises.map((exercise, i) => {
+            const isCardio = isCardioExercise(exercise.category);
+            return (
+              <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-200 font-medium">{exercise.name}</span>
+                  {exercise.category && (
+                    <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                      {exercise.category}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 text-gray-400">
+                  {exercise.sets !== null && (
+                    <span className="text-purple-400">{exercise.sets}s</span>
+                  )}
+                  {exercise.reps !== null && (
+                    <span className="text-pink-400">{exercise.reps}r</span>
+                  )}
+                  {exercise.weight !== null && (
+                    <span className="text-amber-400">{exercise.weight}lbs</span>
+                  )}
+                  {isCardio && exercise.durationMinutes !== null && (
+                    <span className="text-blue-400">{exercise.durationMinutes}min</span>
+                  )}
+                  {isCardio && exercise.caloriesBurned !== null && (
+                    <span className="text-orange-400">{exercise.caloriesBurned}cal</span>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2 text-gray-400">
-                {exercise.sets !== null && (
-                  <span className="text-purple-400">{exercise.sets}s</span>
-                )}
-                {exercise.reps !== null && (
-                  <span className="text-pink-400">{exercise.reps}r</span>
-                )}
-                {exercise.weight !== null && (
-                  <span className="text-amber-400">{exercise.weight}lbs</span>
-                )}
-                {exercise.durationMinutes !== null && (
-                  <span className="text-blue-400">{exercise.durationMinutes}min</span>
-                )}
-                {exercise.caloriesBurned !== null && (
-                  <span className="text-orange-400">{exercise.caloriesBurned}cal</span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </Card>

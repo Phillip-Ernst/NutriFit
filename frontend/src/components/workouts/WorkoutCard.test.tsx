@@ -11,8 +11,8 @@ const mockWorkout: WorkoutLogResponse = {
   totalCaloriesBurned: 300,
   totalSets: 12,
   totalReps: 120,
-  workoutPlanDayId: null,
-  workoutPlanDayName: null,
+  workoutPlanDayId: 10,
+  workoutPlanDayName: 'Push Day',
   exercises: [
     {
       name: 'Bench Press',
@@ -25,7 +25,7 @@ const mockWorkout: WorkoutLogResponse = {
     },
     {
       name: 'Running',
-      category: 'Cardio',
+      category: 'CARDIO',
       sets: null,
       reps: null,
       weight: null,
@@ -36,14 +36,42 @@ const mockWorkout: WorkoutLogResponse = {
 };
 
 describe('WorkoutCard', () => {
-  it('renders workout summary', () => {
+  it('renders workout day name and summary', () => {
     render(<WorkoutCard workout={mockWorkout} />);
 
-    expect(screen.getByText('45')).toBeInTheDocument();
-    expect(screen.getByText('min')).toBeInTheDocument();
-    expect(screen.getByText('300 cal')).toBeInTheDocument();
+    expect(screen.getByText('Push Day')).toBeInTheDocument();
     expect(screen.getByText('12 sets')).toBeInTheDocument();
     expect(screen.getByText('120 reps')).toBeInTheDocument();
+  });
+
+  it('shows calories and duration only when has cardio exercises', () => {
+    render(<WorkoutCard workout={mockWorkout} />);
+
+    expect(screen.getByText('300 cal')).toBeInTheDocument();
+    expect(screen.getByText('45 min')).toBeInTheDocument();
+  });
+
+  it('hides calories and duration when no cardio exercises', () => {
+    const noncardioWorkout: WorkoutLogResponse = {
+      ...mockWorkout,
+      exercises: [mockWorkout.exercises[0]],
+    };
+
+    render(<WorkoutCard workout={noncardioWorkout} />);
+
+    expect(screen.queryByText('cal')).not.toBeInTheDocument();
+    expect(screen.queryByText('min')).not.toBeInTheDocument();
+  });
+
+  it('shows "Workout" when no plan day name', () => {
+    const noPlanWorkout: WorkoutLogResponse = {
+      ...mockWorkout,
+      workoutPlanDayName: null,
+    };
+
+    render(<WorkoutCard workout={noPlanWorkout} />);
+
+    expect(screen.getByText('Workout')).toBeInTheDocument();
   });
 
   it('shows expand button with exercise count', () => {
