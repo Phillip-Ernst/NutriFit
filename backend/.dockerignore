@@ -1,0 +1,27 @@
+# Build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+CLAUDE.md
+
+# Environment files (secrets)
+*.env
+NutriFit-backend.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

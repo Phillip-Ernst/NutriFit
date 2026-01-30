@@ -1,0 +1,19 @@
+# Development overrides - use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# This enables hot-reloading for frontend development
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    environment:
+      - VITE_API_URL=http://localhost:8080/api
+
+  backend:
+    # For backend hot-reload, you'd need Spring DevTools configured
+    # and volume mounts, but it's simpler to just rebuild
+    environment:
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
