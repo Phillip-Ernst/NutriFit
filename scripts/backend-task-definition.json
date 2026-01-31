@@ -1,0 +1,45 @@
+{
+  "family": "nutrifit-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::112129521897:role/nutrifit-ecs-task-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "112129521897.dkr.ecr.us-east-1.amazonaws.com/nutrifit-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {"name": "DB_HOST", "value": "nutrifit-db.cul6cmywq9x6.us-east-1.rds.amazonaws.com"},
+        {"name": "DB_PORT", "value": "5432"},
+        {"name": "DB_NAME", "value": "nutrifit"},
+        {"name": "DB_USER", "value": "nutrifit_admin"},
+        {"name": "DB_PASSWORD", "value": "NutriFit2026Prod!"},
+        {"name": "JWT_SECRET", "value": "NutriFitProdJWTSecret2026SuperSecureKey123!"}
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/nutrifit-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
