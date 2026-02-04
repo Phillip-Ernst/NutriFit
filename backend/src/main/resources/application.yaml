@@ -2,9 +2,6 @@ spring:
   application:
     name: NutriFit
 
-  profiles:
-    active: local
-
   mvc:
     servlet:
       path: /api
