@@ -29,7 +29,7 @@ services:
       DB_NAME: ${DB_NAME:-nutrifit}
       DB_USER: ${DB_USER:-nutrifit}
       DB_PASSWORD: ${DB_PASSWORD:-localdev}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
     depends_on:
       postgres:
         condition: service_healthy

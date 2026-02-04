@@ -2,14 +2,12 @@ spring:
   application:
     name: NutriFit
 
+  profiles:
+    active: local
+
   mvc:
     servlet:
       path: /api
-
-  datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
