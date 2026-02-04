@@ -146,8 +146,8 @@ jobs:
 
       - name: Deploy Backend to ECS
         run: |
-          aws ecs update-service --cluster nutrifit-cluster --service nutrifit-backend --force-new-deployment
+          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-backend --force-new-deployment
 
       - name: Deploy Frontend to ECS
         run: |
-          aws ecs update-service --cluster nutrifit-cluster --service nutrifit-frontend --force-new-deployment
+          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-frontend --force-new-deployment
