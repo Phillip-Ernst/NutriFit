@@ -9,11 +9,15 @@ import static org.mockito.Mockito.*;
 
 class JwtServiceTest {
 
+    // Test secret key (minimum 32 characters for HS256)
+    private static final String TEST_SECRET = "test-jwt-secret-key-for-unit-tests-minimum-32-chars";
+    private static final String DIFFERENT_SECRET = "different-secret-key-also-32-chars-minimum-length";
+
     private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService();
+        jwtService = new JwtService(TEST_SECRET);
     }
 
     @Test
@@ -103,38 +107,47 @@ class JwtServiceTest {
     }
 
     @Test
-    void generateSecretKey_shouldReturnBase64EncodedKey() {
-        // act
-        String secretKey = jwtService.generateSecretKey();
-
-        // assert
-        assertNotNull(secretKey);
-        assertFalse(secretKey.isEmpty());
-        // Should be valid Base64
-        assertDoesNotThrow(() -> java.util.Base64.getDecoder().decode(secretKey));
+    void constructor_shouldRejectNullSecret() {
+        assertThrows(IllegalArgumentException.class, () -> new JwtService(null));
     }
 
     @Test
-    void differentJwtServiceInstances_shouldGenerateDifferentTokens() {
-        // This documents the behavior that each JwtService instance
-        // generates its own secret key, so tokens are not interchangeable
-        // arrange
-        JwtService service1 = new JwtService();
-        JwtService service2 = new JwtService();
+    void constructor_shouldRejectBlankSecret() {
+        assertThrows(IllegalArgumentException.class, () -> new JwtService(""));
+        assertThrows(IllegalArgumentException.class, () -> new JwtService("   "));
+    }
 
-        // act
-        String token1 = service1.generateToken("testuser");
-        String token2 = service2.generateToken("testuser");
+    @Test
+    void constructor_shouldRejectShortSecret() {
+        // Less than 32 characters should be rejected
+        assertThrows(IllegalArgumentException.class, () -> new JwtService("short-secret"));
+    }
 
-        // assert - tokens should be different due to different secret keys
-        assertNotEquals(token1, token2);
+    @Test
+    void sameSecret_shouldProduceInterchangeableTokens() {
+        // Two services with the same secret should be able to validate each other's tokens
+        JwtService service1 = new JwtService(TEST_SECRET);
+        JwtService service2 = new JwtService(TEST_SECRET);
 
-        // token from service1 should only be valid with service1
+        String token = service1.generateToken("testuser");
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetails.getUsername()).thenReturn("testuser");
 
-        assertTrue(service1.validateToken(token1, userDetails));
-        // token1 would fail validation on service2 (different key)
-        assertThrows(Exception.class, () -> service2.validateToken(token1, userDetails));
+        // Token from service1 should be valid on service2 (same secret)
+        assertTrue(service2.validateToken(token, userDetails));
+    }
+
+    @Test
+    void differentSecrets_shouldNotBeInterchangeable() {
+        // Two services with different secrets should NOT be able to validate each other's tokens
+        JwtService service1 = new JwtService(TEST_SECRET);
+        JwtService service2 = new JwtService(DIFFERENT_SECRET);
+
+        String token = service1.generateToken("testuser");
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn("testuser");
+
+        // Token from service1 should fail validation on service2 (different secret)
+        assertThrows(Exception.class, () -> service2.validateToken(token, userDetails));
     }
 }
