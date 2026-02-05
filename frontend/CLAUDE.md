@@ -207,6 +207,13 @@ it("submits login form", async () => {
   * one edge case test (empty state, validation error, etc.)
 * Keep tests fast and reliable
 
+> ⚠️ **KNOWN ISSUE:** Only ~7 of ~65 source files have tests.
+> Priority areas needing coverage:
+> - Auth context and hooks
+> - Meal form submission flow
+> - API error handling paths
+> - Page components (at minimum: loading, error, empty states)
+
 ---
 
 ### API Contract Rules (Critical)
@@ -228,8 +235,119 @@ it("submits login form", async () => {
 ### Error Handling & UX Rules
 * Loading states must show `LoadingSpinner` (or equivalent)
 * Error states should render a friendly message and not crash the app
-* Empty states should be explicit (e.g., “No meals yet”)
+* Empty states should be explicit (e.g., "No meals yet")
 * Avoid `alert()`; use UI messages/modals if needed
+
+> ⚠️ **KNOWN ISSUE:** No error boundaries implemented.
+> A single component error can crash the entire React app.
+> Page-level error boundaries should be added before production.
+
+---
+
+## Critical Patterns to Follow
+
+### Error Boundaries
+Wrap page components in error boundaries to prevent full-app crashes:
+
+```tsx
+// src/components/ErrorBoundary.tsx
+import { Component, ReactNode } from 'react';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  state: State = { hasError: false };
+
+  static getDerivedStateFromError(): State {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? (
+        <div className="p-8 text-center">
+          <h2 className="text-xl text-red-400">Something went wrong</h2>
+          <button onClick={() => this.setState({ hasError: false })}>
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+Usage in routes:
+```tsx
+<Route path="/dashboard" element={
+  <ErrorBoundary>
+    <DashboardPage />
+  </ErrorBoundary>
+} />
+```
+
+### Auth Token Validation
+The auth context should validate token expiry on app load:
+
+```tsx
+// In AuthContext initialization
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.exp * 1000 < Date.now()) {
+        // Token expired, clear and redirect
+        logout();
+      }
+    } catch {
+      logout();
+    }
+  }
+}, []);
+```
+
+### Accessibility Requirements
+- All interactive elements need accessible labels
+- Modal components must trap focus
+- Icon-only buttons need `aria-label`
+
+```tsx
+// ❌ WRONG: No accessible label
+<button onClick={onClose}>
+  <XIcon />
+</button>
+
+// ✅ CORRECT: Has aria-label
+<button onClick={onClose} aria-label="Close modal">
+  <XIcon />
+</button>
+```
+
+### User Feedback on Auth Errors
+Currently, 401 redirects happen silently. Consider adding user notification:
+
+```tsx
+// In axios response interceptor
+if (error.response?.status === 401) {
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  // TODO: Show toast notification before redirect
+  window.location.href = '/login';
+}
+```
 
 ---
 
