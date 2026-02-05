@@ -4,10 +4,10 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::112129521897:role/nutrifit-ecs-task-execution-role",
+  "executionRoleArn": "arn:aws:iam::112129521897:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
-      "name": "backend",
+      "name": "nutrifit-backend",
       "image": "112129521897.dkr.ecr.us-east-1.amazonaws.com/nutrifit-backend:latest",
       "essential": true,
       "portMappings": [
@@ -21,8 +21,11 @@
         {"name": "DB_PORT", "value": "5432"},
         {"name": "DB_NAME", "value": "nutrifit"},
         {"name": "DB_USER", "value": "nutrifit_admin"},
-        {"name": "DB_PASSWORD", "value": "NutriFit2026Prod!"},
-        {"name": "JWT_SECRET", "value": "NutriFitProdJWTSecret2026SuperSecureKey123!"}
+        {"name": "CORS_ALLOWED_ORIGINS", "value": "http://nutrifit-alb-1887638299.us-east-1.elb.amazonaws.com"}
+      ],
+      "secrets": [
+        {"name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit/prod/db-password"},
+        {"name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit/prod/jwt-secret"}
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

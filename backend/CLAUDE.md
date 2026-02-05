@@ -146,8 +146,10 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 #### Token Details
 * Token expiry: **1 hour**
 * Password hashing: **BCrypt strength 12**
-* JWT secret key is **generated in-memory on startup (not persisted)**
-  *    Tokens invalidate when the server restarts.
+
+> ⚠️ **KNOWN ISSUE:** JWT secret is currently generated in-memory on startup.
+> This invalidates all tokens when the server restarts. Before production,
+> externalize via `@Value("${jwt.secret}")` from environment variable.
 
 #### Spring Security Configuration
 * Security config lives in: `config/SecurityConfig.java`
@@ -160,7 +162,11 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 ### Database & ORM
 #### JPA/Hibernate
 * Uses JPA/Hibernate
-* ddl-auto=update in dev (auto-creates/updates tables)
+* `ddl-auto=update` in dev (auto-creates/updates tables)
+
+> ⚠️ **KNOWN ISSUE:** No database migration tool configured.
+> `ddl-auto=update` is unsafe for production (no rollback, no audit trail).
+> Before production, implement Flyway or Liquibase for schema migrations.
 
 #### Relationships
 * User (1) → many MealLog
@@ -352,5 +358,81 @@ Ask whether the user wants:
 * a quick patch
 * or a proper refactor
 Prefer existing patterns already established in the repo.
+
+---
+
+## Critical Patterns to Follow
+
+### JWT Configuration
+```java
+// ❌ WRONG: Secret regenerated on every restart
+private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+// ✅ CORRECT: Secret from environment
+@Value("${jwt.secret}")
+private String jwtSecret;
+
+@PostConstruct
+private void init() {
+    this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+}
+```
+- NEVER generate JWT secret in constructor
+- Use `@Value("${jwt.secret}")` from environment
+- Minimum 256-bit (32 character) secret for HS256
+
+### Exception Handling
+All controllers must have validation errors handled consistently:
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        // Return standardized JSON error, not HTML
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
+        // Log and return safe error message
+    }
+}
+```
+- Return standardized error response format (see root CLAUDE.md)
+- Never expose stack traces to clients
+
+### CORS Configuration
+```java
+// ❌ WRONG: Reflects any origin (security vulnerability)
+response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+
+// ✅ CORRECT: Explicit allowlist
+@Override
+public void addCorsMappings(CorsRegistry registry) {
+    registry.addMapping("/api/**")
+        .allowedOrigins("http://localhost:5173", "https://yourdomain.com")
+        .allowedMethods("GET", "POST", "PUT", "DELETE")
+        .allowCredentials(true);
+}
+```
+
+### Database Changes
+- NEVER use `ddl-auto=update` in production
+- All schema changes must go through Flyway migrations
+- Migration files: `src/main/resources/db/migration/V{version}__{description}.sql`
+- Test migrations in CI before deployment
+
+### Null Safety in Services
+```java
+// ❌ WRONG: May throw NPE if user not found
+User user = userRepository.findByUsername(username);
+return mealLogRepository.findByUser(user); // NPE if user is null
+
+// ✅ CORRECT: Handle missing user explicitly
+User user = userRepository.findByUsername(username)
+    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+return mealLogRepository.findByUser(user);
+```
 
 ---
