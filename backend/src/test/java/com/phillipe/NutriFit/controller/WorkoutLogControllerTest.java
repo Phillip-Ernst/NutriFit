@@ -5,11 +5,13 @@ import com.phillipe.NutriFit.dto.request.ExerciseItemRequest;
 import com.phillipe.NutriFit.dto.request.WorkoutLogFromPlanRequest;
 import com.phillipe.NutriFit.dto.request.WorkoutLogRequest;
 import com.phillipe.NutriFit.dto.response.WorkoutLogResponse;
+import com.phillipe.NutriFit.service.JwtService;
+import com.phillipe.NutriFit.service.UserService;
 import com.phillipe.NutriFit.service.WorkoutLogService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,11 +34,16 @@ class WorkoutLogControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
-    @MockBean
+    @MockitoBean
     private WorkoutLogService workoutLogService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserService userService;
 
     // ==================== CREATE WORKOUT TESTS ====================
 

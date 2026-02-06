@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phillipe.NutriFit.dto.request.FoodItemRequest;
 import com.phillipe.NutriFit.dto.request.MealLogRequest;
 import com.phillipe.NutriFit.dto.response.MealLogResponse;
+import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.MealLogService;
+import com.phillipe.NutriFit.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,11 +33,16 @@ class MealLogControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
-    @MockBean
+    @MockitoBean
     private MealLogService mealLogService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserService userService;
 
     // ==================== CREATE MEAL TESTS ====================
 

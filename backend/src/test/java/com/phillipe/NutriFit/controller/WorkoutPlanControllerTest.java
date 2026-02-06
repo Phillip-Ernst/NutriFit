@@ -8,12 +8,14 @@ import com.phillipe.NutriFit.dto.response.WorkoutPlanDayResponse;
 import com.phillipe.NutriFit.dto.response.WorkoutPlanExerciseResponse;
 import com.phillipe.NutriFit.dto.response.WorkoutPlanResponse;
 import com.phillipe.NutriFit.model.ExerciseCategory;
+import com.phillipe.NutriFit.service.JwtService;
+import com.phillipe.NutriFit.service.UserService;
 import com.phillipe.NutriFit.service.WorkoutPlanService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -36,11 +38,16 @@ class WorkoutPlanControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
-    @MockBean
+    @MockitoBean
     private WorkoutPlanService workoutPlanService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserService userService;
 
     // ==================== CREATE PLAN TESTS ====================
 
@@ -417,7 +424,7 @@ class WorkoutPlanControllerTest {
     void getPlanDayById_success_shouldReturnPlanDay() throws Exception {
         WorkoutPlanExerciseResponse exerciseRes = WorkoutPlanExerciseResponse.builder()
                 .name("Squat")
-                .category(ExerciseCategory.LEGS)
+                .category(ExerciseCategory.QUADS)
                 .targetSets(5)
                 .targetReps(5)
                 .build();
