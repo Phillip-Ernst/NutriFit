@@ -1,5 +1,6 @@
 package com.phillipe.NutriFit.service;
 
+import com.phillipe.NutriFit.exception.DuplicateUsernameException;
 import com.phillipe.NutriFit.repository.UserRepository;
 import com.phillipe.NutriFit.model.entity.User;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,7 @@ class UserServiceTest {
         user.setUsername("testuser");
         user.setPassword("plainPassword");
 
+        when(userRepo.existsByUsername("testuser")).thenReturn(false);
         when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword123");
         when(userRepo.save(any(User.class))).thenAnswer(invocation -> {
             User savedUser = invocation.getArgument(0);
@@ -48,6 +50,7 @@ class UserServiceTest {
         assertEquals("encodedPassword123", savedUser.getPassword());
 
         verify(passwordEncoder).encode("plainPassword");
+        verify(userRepo).existsByUsername("testuser");
         verify(userRepo).save(user);
     }
 
@@ -58,6 +61,7 @@ class UserServiceTest {
         user.setUsername("originalUsername");
         user.setPassword("password");
 
+        when(userRepo.existsByUsername("originalUsername")).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("encoded");
         when(userRepo.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -84,6 +88,7 @@ class UserServiceTest {
         savedUserFromRepo.setUsername("testuser");
         savedUserFromRepo.setPassword("encoded");
 
+        when(userRepo.existsByUsername("testuser")).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("encoded");
         when(userRepo.save(any(User.class))).thenReturn(savedUserFromRepo);
 
@@ -93,5 +98,20 @@ class UserServiceTest {
         // assert
         assertSame(savedUserFromRepo, result);
         assertEquals(42L, result.getId());
+    }
+
+    @Test
+    void saveUser_duplicateUsername_shouldThrowException() {
+        User user = new User();
+        user.setUsername("existinguser");
+        user.setPassword("password123");
+
+        when(userRepo.existsByUsername("existinguser")).thenReturn(true);
+
+        DuplicateUsernameException ex = assertThrows(DuplicateUsernameException.class, () -> userService.saveUser(user));
+        assertTrue(ex.getMessage().contains("existinguser"));
+
+        verify(userRepo, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(any());
     }
 }

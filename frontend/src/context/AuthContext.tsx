@@ -12,6 +12,29 @@ export interface AuthContextType {
   logout: () => void;
 }
 
+/**
+ * Checks if a JWT token is expired by decoding the payload and comparing exp claim
+ * Returns true if token is expired or invalid, false if still valid
+ */
+export function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return true; // Invalid JWT format
+    }
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.exp) {
+      return true; // No expiry claim
+    }
+    // exp is in seconds, Date.now() is in milliseconds
+    const expiryTime = payload.exp * 1000;
+    // Add small buffer (10 seconds) to account for clock skew
+    return Date.now() >= expiryTime - 10000;
+  } catch {
+    return true; // Invalid token
+  }
+}
+
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -23,9 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUsername = localStorage.getItem('username');
+
     if (storedToken && storedUsername) {
-      setToken(storedToken);
-      setUsername(storedUsername);
+      // Validate token expiry before restoring session
+      if (isTokenExpired(storedToken)) {
+        // Token expired - clear storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        console.info('Session expired. Please log in again.');
+      } else {
+        setToken(storedToken);
+        setUsername(storedUsername);
+      }
     }
     setIsLoading(false);
   }, []);
