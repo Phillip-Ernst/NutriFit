@@ -1,6 +1,8 @@
 package com.phillipe.NutriFit.config;
 
 import com.phillipe.NutriFit.dto.response.ErrorResponse;
+import com.phillipe.NutriFit.exception.DuplicateUsernameException;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -76,6 +78,30 @@ class GlobalExceptionHandlerTest {
         assertNotNull(response.getBody());
         assertEquals("BAD_REQUEST", response.getBody().getError());
         assertEquals("Invalid input provided", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleEntityNotFound_shouldReturnNotFound() {
+        EntityNotFoundException ex = new EntityNotFoundException("Workout plan not found");
+
+        ResponseEntity<ErrorResponse> response = handler.handleEntityNotFound(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("NOT_FOUND", response.getBody().getError());
+        assertEquals("Workout plan not found", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleDuplicateUsername_shouldReturnConflict() {
+        DuplicateUsernameException ex = new DuplicateUsernameException("taken-user");
+
+        ResponseEntity<ErrorResponse> response = handler.handleDuplicateUsername(ex);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("USERNAME_EXISTS", response.getBody().getError());
+        assertTrue(response.getBody().getMessage().contains("taken-user"));
     }
 
     @Test

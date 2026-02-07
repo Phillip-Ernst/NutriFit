@@ -5,15 +5,17 @@ import com.phillipe.NutriFit.dto.request.ExerciseItemRequest;
 import com.phillipe.NutriFit.dto.request.WorkoutLogFromPlanRequest;
 import com.phillipe.NutriFit.dto.request.WorkoutLogRequest;
 import com.phillipe.NutriFit.dto.response.WorkoutLogResponse;
+import com.phillipe.NutriFit.config.SecurityConfig;
 import com.phillipe.NutriFit.service.JwtService;
+import com.phillipe.NutriFit.service.MyUserDetailsService;
 import com.phillipe.NutriFit.service.UserService;
 import com.phillipe.NutriFit.service.WorkoutLogService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -24,11 +26,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(WorkoutLogController.class)
+@Import(SecurityConfig.class)
 class WorkoutLogControllerTest {
 
     @Autowired
@@ -45,10 +49,12 @@ class WorkoutLogControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private MyUserDetailsService myUserDetailsService;
+
     // ==================== CREATE WORKOUT TESTS ====================
 
     @Test
-    @WithMockUser(username = "testuser")
     void createWorkout_success_shouldReturnWorkoutLogResponse() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Bench Press")
@@ -79,6 +85,7 @@ class WorkoutLogControllerTest {
 
         mockMvc.perform(post("/workouts")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -91,7 +98,6 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createWorkout_multipleExercises_shouldReturnAggregatedTotals() throws Exception {
         ExerciseItemRequest exercise1 = ExerciseItemRequest.builder()
                 .name("Squats")
@@ -132,6 +138,7 @@ class WorkoutLogControllerTest {
 
         mockMvc.perform(post("/workouts")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -141,7 +148,6 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createWorkout_emptyExercisesList_shouldReturnValidationError() throws Exception {
         WorkoutLogRequest request = WorkoutLogRequest.builder()
                 .exercises(Collections.emptyList())
@@ -149,6 +155,7 @@ class WorkoutLogControllerTest {
 
         mockMvc.perform(post("/workouts")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -157,7 +164,6 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createWorkout_exerciseWithoutName_shouldReturnValidationError() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("")  // blank name should fail validation
@@ -171,6 +177,7 @@ class WorkoutLogControllerTest {
 
         mockMvc.perform(post("/workouts")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -179,7 +186,7 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    void createWorkout_unauthenticated_shouldReturnUnauthorized() throws Exception {
+    void createWorkout_unauthenticated_shouldReturnForbidden() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Running")
                 .durationMinutes(30)
@@ -193,13 +200,12 @@ class WorkoutLogControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     // ==================== CREATE WORKOUT FROM PLAN TESTS ====================
 
     @Test
-    @WithMockUser(username = "testuser")
     void createWorkoutFromPlan_success_shouldReturnCreatedWorkout() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Deadlift")
@@ -233,6 +239,7 @@ class WorkoutLogControllerTest {
 
         mockMvc.perform(post("/workouts/from-plan")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -244,7 +251,6 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createWorkoutFromPlan_nullPlanDayId_shouldReturnValidationError() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Pull-ups")
@@ -259,6 +265,7 @@ class WorkoutLogControllerTest {
 
         mockMvc.perform(post("/workouts/from-plan")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -267,7 +274,6 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createWorkoutFromPlan_emptyExercises_shouldReturnValidationError() throws Exception {
         WorkoutLogFromPlanRequest request = WorkoutLogFromPlanRequest.builder()
                 .workoutPlanDayId(1L)
@@ -276,6 +282,7 @@ class WorkoutLogControllerTest {
 
         mockMvc.perform(post("/workouts/from-plan")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -284,7 +291,7 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    void createWorkoutFromPlan_unauthenticated_shouldReturnUnauthorized() throws Exception {
+    void createWorkoutFromPlan_unauthenticated_shouldReturnForbidden() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Barbell Row")
                 .sets(4)
@@ -300,13 +307,12 @@ class WorkoutLogControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     // ==================== GET MY WORKOUTS TESTS ====================
 
     @Test
-    @WithMockUser(username = "testuser")
     void getMyWorkouts_success_shouldReturnWorkoutsList() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Push-ups")
@@ -337,7 +343,8 @@ class WorkoutLogControllerTest {
 
         when(workoutLogService.getMyWorkouts("testuser")).thenReturn(List.of(workout1, workout2));
 
-        mockMvc.perform(get("/workouts/mine"))
+        mockMvc.perform(get("/workouts/mine")
+                        .with(user("testuser")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value(1L))
@@ -347,11 +354,11 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "newuser")
     void getMyWorkouts_emptyList_shouldReturnEmptyArray() throws Exception {
         when(workoutLogService.getMyWorkouts("newuser")).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/workouts/mine"))
+        mockMvc.perform(get("/workouts/mine")
+                        .with(user("newuser")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
 
@@ -359,19 +366,19 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    void getMyWorkouts_unauthenticated_shouldReturnUnauthorized() throws Exception {
+    void getMyWorkouts_unauthenticated_shouldReturnForbidden() throws Exception {
         mockMvc.perform(get("/workouts/mine"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
         verify(workoutLogService, never()).getMyWorkouts(any());
     }
 
     @Test
-    @WithMockUser(username = "user1")
     void getMyWorkouts_differentUser_shouldOnlyGetOwnWorkouts() throws Exception {
         when(workoutLogService.getMyWorkouts("user1")).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/workouts/mine"))
+        mockMvc.perform(get("/workouts/mine")
+                        .with(user("user1")))
                 .andExpect(status().isOk());
 
         verify(workoutLogService).getMyWorkouts("user1");

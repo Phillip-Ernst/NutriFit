@@ -4,15 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phillipe.NutriFit.dto.request.FoodItemRequest;
 import com.phillipe.NutriFit.dto.request.MealLogRequest;
 import com.phillipe.NutriFit.dto.response.MealLogResponse;
+import com.phillipe.NutriFit.config.SecurityConfig;
 import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.MealLogService;
+import com.phillipe.NutriFit.service.MyUserDetailsService;
 import com.phillipe.NutriFit.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -23,11 +25,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(MealLogController.class)
+@Import(SecurityConfig.class)
 class MealLogControllerTest {
 
     @Autowired
@@ -44,10 +48,12 @@ class MealLogControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private MyUserDetailsService myUserDetailsService;
+
     // ==================== CREATE MEAL TESTS ====================
 
     @Test
-    @WithMockUser(username = "testuser")
     void createMeal_success_shouldReturnMealLogResponse() throws Exception {
         FoodItemRequest foodItem = FoodItemRequest.builder()
                 .type("Chicken Breast")
@@ -76,6 +82,7 @@ class MealLogControllerTest {
 
         mockMvc.perform(post("/meals")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -88,7 +95,6 @@ class MealLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createMeal_multipleFoods_shouldReturnAggregatedTotals() throws Exception {
         FoodItemRequest food1 = FoodItemRequest.builder()
                 .type("Rice")
@@ -125,6 +131,7 @@ class MealLogControllerTest {
 
         mockMvc.perform(post("/meals")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -133,7 +140,6 @@ class MealLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createMeal_emptyFoodsList_shouldReturnValidationError() throws Exception {
         MealLogRequest request = MealLogRequest.builder()
                 .foods(Collections.emptyList())
@@ -141,6 +147,7 @@ class MealLogControllerTest {
 
         mockMvc.perform(post("/meals")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -149,7 +156,6 @@ class MealLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createMeal_nullFoodsList_shouldReturnValidationError() throws Exception {
         MealLogRequest request = MealLogRequest.builder()
                 .foods(null)
@@ -157,6 +163,7 @@ class MealLogControllerTest {
 
         mockMvc.perform(post("/meals")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -165,7 +172,6 @@ class MealLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createMeal_foodWithoutType_shouldReturnValidationError() throws Exception {
         FoodItemRequest foodItem = FoodItemRequest.builder()
                 .type("")  // blank type should fail validation
@@ -178,6 +184,7 @@ class MealLogControllerTest {
 
         mockMvc.perform(post("/meals")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -186,7 +193,7 @@ class MealLogControllerTest {
     }
 
     @Test
-    void createMeal_unauthenticated_shouldReturnUnauthorized() throws Exception {
+    void createMeal_unauthenticated_shouldReturnForbidden() throws Exception {
         FoodItemRequest foodItem = FoodItemRequest.builder()
                 .type("Apple")
                 .calories(95)
@@ -200,11 +207,10 @@ class MealLogControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void createMeal_foodWithNullNutrients_shouldSucceed() throws Exception {
         FoodItemRequest foodItem = FoodItemRequest.builder()
                 .type("Unknown Food")
@@ -233,6 +239,7 @@ class MealLogControllerTest {
 
         mockMvc.perform(post("/meals")
                         .with(csrf())
+                        .with(user("testuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -242,7 +249,6 @@ class MealLogControllerTest {
     // ==================== GET MY MEALS TESTS ====================
 
     @Test
-    @WithMockUser(username = "testuser")
     void getMyMeals_success_shouldReturnMealsList() throws Exception {
         FoodItemRequest foodItem = FoodItemRequest.builder()
                 .type("Oatmeal")
@@ -274,7 +280,8 @@ class MealLogControllerTest {
 
         when(mealLogService.getMyMeals("testuser")).thenReturn(List.of(meal1, meal2));
 
-        mockMvc.perform(get("/meals/mine"))
+        mockMvc.perform(get("/meals/mine")
+                        .with(user("testuser")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value(1L))
@@ -284,11 +291,11 @@ class MealLogControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "newuser")
     void getMyMeals_emptyList_shouldReturnEmptyArray() throws Exception {
         when(mealLogService.getMyMeals("newuser")).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/meals/mine"))
+        mockMvc.perform(get("/meals/mine")
+                        .with(user("newuser")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
 
@@ -296,20 +303,20 @@ class MealLogControllerTest {
     }
 
     @Test
-    void getMyMeals_unauthenticated_shouldReturnUnauthorized() throws Exception {
+    void getMyMeals_unauthenticated_shouldReturnForbidden() throws Exception {
         mockMvc.perform(get("/meals/mine"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
         verify(mealLogService, never()).getMyMeals(any());
     }
 
     @Test
-    @WithMockUser(username = "user1")
     void getMyMeals_differentUser_shouldOnlyGetOwnMeals() throws Exception {
         // This test verifies that the username from authentication is used
         when(mealLogService.getMyMeals("user1")).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/meals/mine"))
+        mockMvc.perform(get("/meals/mine")
+                        .with(user("user1")))
                 .andExpect(status().isOk());
 
         // Verify that the service was called with the authenticated user's name
