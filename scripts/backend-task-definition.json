@@ -17,15 +17,14 @@
         }
       ],
       "environment": [
-        {"name": "DB_HOST", "value": "nutrifit-db.cul6cmywq9x6.us-east-1.rds.amazonaws.com"},
-        {"name": "DB_PORT", "value": "5432"},
-        {"name": "DB_NAME", "value": "nutrifit"},
-        {"name": "DB_USER", "value": "nutrifit_admin"},
-        {"name": "CORS_ALLOWED_ORIGINS", "value": "http://nutrifit-alb-1887638299.us-east-1.elb.amazonaws.com"}
+        {"name": "SPRING_DATASOURCE_URL", "value": "jdbc:postgresql://nutrifit-db-prod.cul6cmywq9x6.us-east-1.rds.amazonaws.com:5432/postgres"},
+        {"name": "SPRING_DATASOURCE_USERNAME", "value": "nutrifit_admin"},
+        {"name": "SPRING_JPA_HIBERNATE_DDL_AUTO", "value": "update"},
+        {"name": "CORS_ALLOWED_ORIGINS", "value": "https://nutritionxfitness.com,https://www.nutritionxfitness.com"}
       ],
       "secrets": [
-        {"name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit/prod/db-password"},
-        {"name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit/prod/jwt-secret"}
+        {"name": "SPRING_DATASOURCE_PASSWORD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-db-password-RrkF6B"},
+        {"name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-jwt-secret-Drm77O"}
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
