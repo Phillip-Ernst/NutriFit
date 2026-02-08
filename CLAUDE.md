@@ -59,9 +59,9 @@ Primary goals:
 ### High Priority
 - [x] **Frontend error boundaries implemented** — `ErrorBoundary` component at `src/components/ui/ErrorBoundary.tsx`, wrapping all routes in `AppRouter.tsx`.
 - [x] **Test coverage improved** — Backend: ~80% controller coverage with MockMvc tests. Frontend: 16 test files covering components, hooks, API, and pages.
-- [ ] **.env file committed** — Root `.env` contains DB credentials. Remove from git history.
-- [ ] **N+1 query in WorkoutPlanServiceImpl** — `getMyPlans()` lazy-loads days/exercises per plan. Use `@EntityGraph` or `JOIN FETCH`.
-- [ ] **Missing numeric validation on DTOs** — `FoodItemRequest`, `ExerciseItemRequest`, etc. lack `@Min(0)` on calories, reps, sets, duration fields.
+- [x] **.env file committed** — Verified `.env` was never committed; `.gitignore` properly configured.
+- [x] **N+1 query in WorkoutPlanServiceImpl** — Fixed with `@EntityGraph(attributePaths = {"days", "days.exercises"})` on repository methods.
+- [x] **Missing numeric validation on DTOs** — Added `@Min(0)` validation to `FoodItemRequest`, `ExerciseItemRequest`, `WorkoutPlanExerciseRequest`, and `WorkoutPlanDayRequest`.
 
 ### Medium Priority
 - [x] Spring Security dependency enabled in `pom.xml`
