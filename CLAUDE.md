@@ -51,23 +51,23 @@ Primary goals:
 ## Known Architecture Issues (To Address)
 
 ### Critical (Must Fix Before Production)
-- [ ] **JWT secret generated in-memory** — `backend/.../service/JwtService.java` regenerates secret on every restart, invalidating all tokens. Move to environment variable.
-- [ ] **CORS accepts all origins** — `backend/.../config/WebConfig.java` reflects any Origin header. Add explicit origin allowlist.
+- [x] **JWT secret externalized** — JWT secret now loaded from `JWT_SECRET` environment variable (falls back to generated secret for dev only).
+- [x] **CORS configured with allowlist** — `WebConfig.java` now uses explicit origin allowlist instead of reflecting any Origin header.
 - [ ] **No database migrations** — Using `ddl-auto=update` risks data loss. Implement Flyway or Liquibase.
-- [ ] **No global exception handler** — Validation errors return raw Spring HTML. Add `@RestControllerAdvice`.
+- [x] **Global exception handler added** — `GlobalExceptionHandler` with `@RestControllerAdvice` returns structured JSON errors.
 
 ### High Priority
-- [ ] **Frontend missing error boundaries** — Single component error crashes entire React app.
-- [ ] **Test coverage incomplete** — ~30% backend service coverage, ~10% frontend file coverage.
+- [x] **Frontend error boundaries implemented** — `ErrorBoundary` component at `src/components/ui/ErrorBoundary.tsx`, integrated into `AppRouter.tsx`.
+- [x] **Test coverage improved** — Backend: ~80% controller coverage with MockMvc tests. Frontend: 16 test files with 141 tests covering components, hooks, API, and pages.
 - [ ] **.env file committed** — Root `.env` contains DB credentials. Remove from git history.
 
 ### Medium Priority
-- [ ] Spring Security dependency commented out in `pom.xml`
+- [x] Spring Security dependency enabled in `pom.xml`
 - [ ] Login endpoint returns plain text on failure (inconsistent with JSON API)
 - [ ] Numeric DTO fields allow null without validation
-- [ ] No controller tests (MockMvc) in backend
+- [x] Controller tests (MockMvc) added for all controllers (MealLog, WorkoutLog, WorkoutPlan, User, Exercise, Health)
 - [ ] Auth context doesn't validate token expiry on app load
-- [ ] No structured logging configuration
+- [x] Structured logging added via `RequestLoggingFilter` for request/response logging
 
 ---
 

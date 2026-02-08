@@ -60,7 +60,7 @@ Rules:
 Stack: React 18, TypeScript, Vite, Tailwind CSS v4, React Router v6, TanStack Query, Axios.
 #### Source structure `(src/)`:
 * **api/** — Axios instance (`axios.ts` with JWT interceptor + 401 handler), endpoint modules (`auth.ts`, `meals.ts`).
-* **components/ui/ — Reusable primitives**: `Button`, `Input`, `Card`, `StatCard`, `MacroBar`, `LoadingSpinner`, `Modal`.
+* **components/ui/ — Reusable primitives**: `Button`, `Input`, `Card`, `StatCard`, `MacroBar`, `LoadingSpinner`, `Modal`, `ErrorBoundary`.
 * **components/layout/** — `Navbar` (responsive with mobile hamburger) and `AppLayout` (navbar + `<Outlet />`).
 * **components/meals/** — Domain components: `MealForm`, `FoodItemRow`, `MealCard`, `MealTable`, `NutritionSummary`.
 * **context/** — `AuthContext` manages JWT token + username in localStorage with `login`, `register`, `logout`.
@@ -207,12 +207,12 @@ it("submits login form", async () => {
   * one edge case test (empty state, validation error, etc.)
 * Keep tests fast and reliable
 
-> ⚠️ **KNOWN ISSUE:** Only ~7 of ~65 source files have tests.
-> Priority areas needing coverage:
+> ✅ **Test coverage:** 16 test files with 141 tests covering:
 > - Auth context and hooks
 > - Meal form submission flow
-> - API error handling paths
-> - Page components (at minimum: loading, error, empty states)
+> - API modules (auth, meals, axios interceptors)
+> - UI components (Button, Input, Card, Modal, ErrorBoundary, etc.)
+> - Page components (LoginPage, RegisterPage, DashboardPage, MealLogPage, etc.)
 
 ---
 
@@ -238,58 +238,22 @@ it("submits login form", async () => {
 * Empty states should be explicit (e.g., "No meals yet")
 * Avoid `alert()`; use UI messages/modals if needed
 
-> ⚠️ **KNOWN ISSUE:** No error boundaries implemented.
-> A single component error can crash the entire React app.
-> Page-level error boundaries should be added before production.
+> ✅ **Error boundaries implemented** at `src/components/ui/ErrorBoundary.tsx`.
+> All protected routes are wrapped with error boundaries in `AppRouter.tsx`.
 
 ---
 
 ## Critical Patterns to Follow
 
 ### Error Boundaries
-Wrap page components in error boundaries to prevent full-app crashes:
+Error boundaries are implemented at `src/components/ui/ErrorBoundary.tsx` and integrated into `AppRouter.tsx`.
 
-```tsx
-// src/components/ErrorBoundary.tsx
-import { Component, ReactNode } from 'react';
+The `ErrorBoundary` component:
+- Catches JavaScript errors in child component tree
+- Displays a styled fallback UI with "Try again" button
+- Accepts optional custom `fallback` prop for custom error UI
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
-
-  static getDerivedStateFromError(): State {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div className="p-8 text-center">
-          <h2 className="text-xl text-red-400">Something went wrong</h2>
-          <button onClick={() => this.setState({ hasError: false })}>
-            Try again
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-```
-
-Usage in routes:
+All protected routes are wrapped with error boundaries in `AppRouter.tsx`:
 ```tsx
 <Route path="/dashboard" element={
   <ErrorBoundary>
