@@ -51,23 +51,34 @@ Primary goals:
 ## Known Architecture Issues (To Address)
 
 ### Critical (Must Fix Before Production)
-- [ ] **JWT secret generated in-memory** — `backend/.../service/JwtService.java` regenerates secret on every restart, invalidating all tokens. Move to environment variable.
-- [ ] **CORS accepts all origins** — `backend/.../config/WebConfig.java` reflects any Origin header. Add explicit origin allowlist.
+- [x] **JWT secret externalized** — JWT secret now loaded from `JWT_SECRET` environment variable (falls back to generated secret for dev only).
+- [x] **CORS configured with allowlist** — `WebConfig.java` now uses explicit origin allowlist instead of reflecting any Origin header.
 - [ ] **No database migrations** — Using `ddl-auto=update` risks data loss. Implement Flyway or Liquibase.
-- [ ] **No global exception handler** — Validation errors return raw Spring HTML. Add `@RestControllerAdvice`.
+- [x] **Global exception handler added** — `GlobalExceptionHandler` with `@RestControllerAdvice` returns structured JSON errors.
 
 ### High Priority
-- [ ] **Frontend missing error boundaries** — Single component error crashes entire React app.
-- [ ] **Test coverage incomplete** — ~30% backend service coverage, ~10% frontend file coverage.
+- [x] **Frontend error boundaries implemented** — `ErrorBoundary` component at `src/components/ui/ErrorBoundary.tsx`, wrapping all routes in `AppRouter.tsx`.
+- [x] **Test coverage improved** — Backend: ~80% controller coverage with MockMvc tests. Frontend: 16 test files covering components, hooks, API, and pages.
 - [ ] **.env file committed** — Root `.env` contains DB credentials. Remove from git history.
+- [ ] **N+1 query in WorkoutPlanServiceImpl** — `getMyPlans()` lazy-loads days/exercises per plan. Use `@EntityGraph` or `JOIN FETCH`.
+- [ ] **Missing numeric validation on DTOs** — `FoodItemRequest`, `ExerciseItemRequest`, etc. lack `@Min(0)` on calories, reps, sets, duration fields.
 
 ### Medium Priority
-- [ ] Spring Security dependency commented out in `pom.xml`
+- [x] Spring Security dependency enabled in `pom.xml`
 - [ ] Login endpoint returns plain text on failure (inconsistent with JSON API)
-- [ ] Numeric DTO fields allow null without validation
-- [ ] No controller tests (MockMvc) in backend
-- [ ] Auth context doesn't validate token expiry on app load
-- [ ] No structured logging configuration
+- [x] Controller tests (MockMvc) added for all controllers (MealLog, WorkoutLog, WorkoutPlan, User, Exercise, Health)
+- [x] Auth context validates token expiry on app load (`isTokenExpired()` in `AuthContext.tsx`)
+- [x] Structured logging added via `RequestLoggingFilter` for request/response logging
+- [ ] **DTO reuse anti-pattern** — `MealLogResponse` uses `FoodItemRequest` instead of separate response DTO
+- [ ] **Unused OAuth2 dependency** — `spring-boot-starter-oauth2-client` in pom.xml but not used
+- [ ] **No OpenAPI documentation** — Missing Springdoc annotations for auto-generated API docs
+
+### Low Priority (Tech Debt)
+- [ ] **Frontend accessibility gaps** — Icon-only buttons missing `aria-label` in Modal, Navbar, FoodItemRow
+- [ ] **Modal focus not trapped** — Modal component doesn't implement keyboard focus trap
+- [ ] **Array index as React key** — Several components use index as key (MealForm, WorkoutForm, MealCard, etc.)
+- [ ] **No axios interceptor tests** — Critical auth flow in `axios.ts` lacks test coverage
+- [ ] **Silent 401 redirect** — Auth failure redirects without user notification (no toast/message)
 
 ---
 
@@ -96,6 +107,7 @@ Primary goals:
 - Backend `Instant` fields serialize to ISO-8601 strings (e.g., `"2024-01-15T10:30:00Z"`)
 - Response DTOs should be separate from Request DTOs (avoid reuse)
 - Nullable numeric fields: use `number | null` in TypeScript, display with `val ?? 0`
+- DateTime comparisons (e.g., `isToday()`) should use UTC to avoid timezone issues
 
 ### Error Response Format
 All API errors should return consistent JSON:

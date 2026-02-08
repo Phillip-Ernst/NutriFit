@@ -24,14 +24,18 @@ com/phillipe/NutriFit/
 ├── NutriFitApplication.java
 ├── config/                    # Configuration classes
 │   ├── SecurityConfig.java
+│   ├── WebConfig.java
+│   ├── GlobalExceptionHandler.java
 │   └── filter/
-│       └── JwtFilter.java
+│       ├── JwtFilter.java
+│       └── RequestLoggingFilter.java
 ├── controller/                # REST controllers
 │   ├── UserController.java
 │   ├── MealLogController.java
 │   ├── WorkoutLogController.java
 │   ├── WorkoutPlanController.java
-│   └── ExerciseController.java
+│   ├── ExerciseController.java
+│   └── HealthController.java
 ├── service/                   # Business logic (interfaces + implementations)
 │   ├── JwtService.java
 │   ├── MyUserDetailsService.java
@@ -147,9 +151,9 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 * Token expiry: **1 hour**
 * Password hashing: **BCrypt strength 12**
 
-> ⚠️ **KNOWN ISSUE:** JWT secret is currently generated in-memory on startup.
-> This invalidates all tokens when the server restarts. Before production,
-> externalize via `@Value("${jwt.secret}")` from environment variable.
+> ✅ **JWT secret externalized** — JWT secret is loaded from `JWT_SECRET` environment variable.
+> `JwtService.java` validates minimum 32-character key length for HS256 security.
+> Falls back to generated secret only in dev when env var is missing (logged as warning).
 
 #### Spring Security Configuration
 * Security config lives in: `config/SecurityConfig.java`
@@ -330,7 +334,11 @@ Coverage Expectations
   * at least one edge case
 * Keep tests fast and deterministic (no DB/network).
 
-How to  run tests
+> ✅ **Controller test coverage:** MockMvc tests exist for all controllers:
+> - `MealLogControllerTest`, `WorkoutLogControllerTest`, `WorkoutPlanControllerTest`
+> - `UserControllerTest`, `ExerciseControllerTest`, `HealthControllerTest`
+
+How to run tests
 ```
 ./mvnw test
 ```
@@ -382,40 +390,38 @@ private void init() {
 - Minimum 256-bit (32 character) secret for HS256
 
 ### Exception Handling
-All controllers must have validation errors handled consistently:
+> ✅ **Implemented** — `GlobalExceptionHandler.java` in `config/` package.
 
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
+All controllers have validation errors handled consistently via `@RestControllerAdvice`:
+- `MethodArgumentNotValidException` → field-level validation errors
+- `UsernameNotFoundException` → 401 Unauthorized
+- `BadCredentialsException` → 401 Unauthorized
+- `AccessDeniedException` → 403 Forbidden
+- Generic exceptions → 500 Internal Server Error with safe message
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
-        // Return standardized JSON error, not HTML
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
-        // Log and return safe error message
-    }
-}
-```
-- Return standardized error response format (see root CLAUDE.md)
-- Never expose stack traces to clients
+Error response format matches the root CLAUDE.md specification.
 
 ### CORS Configuration
+> ✅ **Implemented** — `WebConfig.java` has explicit origin allowlist from `CORS_ALLOWED_ORIGINS` env var.
+
 ```java
 // ❌ WRONG: Reflects any origin (security vulnerability)
 response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
 
-// ✅ CORRECT: Explicit allowlist
+// ✅ CORRECT: Explicit allowlist (current implementation)
+@Value("${cors.allowed-origins}")
+private String allowedOrigins;  // Comma-separated list
+
 @Override
 public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/api/**")
-        .allowedOrigins("http://localhost:5173", "https://yourdomain.com")
-        .allowedMethods("GET", "POST", "PUT", "DELETE")
+        .allowedOrigins(allowedOrigins.split(","))
+        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
         .allowCredentials(true);
 }
 ```
+
+**Note:** CORS is disabled in `SecurityConfig.java` (`cors.disable()`) because it's handled manually via `WebConfig`. This works but may cause confusion.
 
 ### Database Changes
 - NEVER use `ddl-auto=update` in production
@@ -434,5 +440,77 @@ User user = userRepository.findByUsername(username)
     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 return mealLogRepository.findByUser(user);
 ```
+
+---
+
+## Known Issues & Tech Debt
+
+### High Priority
+
+#### N+1 Query in WorkoutPlanServiceImpl
+**File:** `service/impl/WorkoutPlanServiceImpl.java`
+
+The `getMyPlans()` method returns all plans with lazy-loaded `days` and `exercises`:
+```java
+return workoutPlanRepo.findByUserIdOrderByCreatedAtDesc(user.getId())
+    .stream()
+    .map(this::toResponse)  // Triggers lazy load per plan
+    .toList();
+```
+**Fix:** Use `@EntityGraph` or `JOIN FETCH` in the repository query.
+
+#### Missing Numeric Validation on DTOs
+**Files:** `dto/request/FoodItemRequest.java`, `ExerciseItemRequest.java`, `WorkoutLogRequest.java`
+
+Numeric fields (calories, protein, sets, reps, duration) lack validation:
+```java
+// Current (no validation)
+private Integer calories;
+
+// Should be
+@Min(0)
+@Max(10000)
+private Integer calories;
+```
+
+### Medium Priority
+
+#### DTO Reuse Anti-Pattern
+**File:** `dto/response/MealLogResponse.java`
+
+Uses `FoodItemRequest` in response instead of a separate `FoodItemResponse`:
+```java
+private List<FoodItemRequest> foods;  // Should be FoodItemResponse
+```
+This couples request validation with response serialization.
+
+#### Unused OAuth2 Dependency
+**File:** `pom.xml`
+
+`spring-boot-starter-oauth2-client` is included but not used. Remove if not planned.
+
+#### Hardcoded ROLE_USER
+**File:** `security/UserPrincipal.java`
+
+All users get `ROLE_USER` without role-based authorization support:
+```java
+public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+}
+```
+
+### Low Priority
+
+#### No OpenAPI Documentation
+Missing Springdoc annotations for auto-generated API docs. Consider adding:
+```xml
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+</dependency>
+```
+
+#### Short Method Names
+`nz()` helper in service implementations could be more descriptive (`nullToZero()`)
 
 ---

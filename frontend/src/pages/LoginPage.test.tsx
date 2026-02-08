@@ -103,7 +103,8 @@ describe('LoginPage', () => {
 
     it('shows loading state during login', async () => {
       const mockLogin = vi.fn(
-        () => new Promise((resolve) => setTimeout(resolve, 100)),
+        (_username: string, _password: string): Promise<void> =>
+          new Promise((resolve) => setTimeout(resolve, 100)),
       );
       const user = userEvent.setup();
 
