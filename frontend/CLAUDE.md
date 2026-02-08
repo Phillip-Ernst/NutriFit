@@ -59,13 +59,15 @@ Rules:
 ### Architecture
 Stack: React 18, TypeScript, Vite, Tailwind CSS v4, React Router v6, TanStack Query, Axios.
 #### Source structure `(src/)`:
-* **api/** — Axios instance (`axios.ts` with JWT interceptor + 401 handler), endpoint modules (`auth.ts`, `meals.ts`).
-* **components/ui/ — Reusable primitives**: `Button`, `Input`, `Card`, `StatCard`, `MacroBar`, `LoadingSpinner`, `Modal`, `ErrorBoundary`.
+* **api/** — Axios instance (`axios.ts` with JWT interceptor + 401 handler), endpoint modules (`auth.ts`, `meals.ts`, `workouts.ts`, `workoutPlans.ts`).
+* **components/ui/** — Reusable primitives: `Button`, `Input`, `Card`, `StatCard`, `MacroBar`, `LoadingSpinner`, `Modal`, `ErrorBoundary`.
 * **components/layout/** — `Navbar` (responsive with mobile hamburger) and `AppLayout` (navbar + `<Outlet />`).
 * **components/meals/** — Domain components: `MealForm`, `FoodItemRow`, `MealCard`, `MealTable`, `NutritionSummary`.
-* **context/** — `AuthContext` manages JWT token + username in localStorage with `login`, `register`, `logout`.
-* **hooks/** — `useAuth` and `useMeals` (TanStack Query hooks: `useMyMeals`, `useCreateMeal`).
-* **pages/** — One file per route: `LandingPage`, `LoginPage`, `RegisterPage`, `DashboardPage`, `MealLogPage`, `MealHistoryPage`, `WorkoutsPage`, `ProfilePage`, `NotFoundPage`.
+* **components/workouts/** — Workout logging: `WorkoutForm`, `ExerciseItemRow`, `WorkoutCard`.
+* **components/workoutPlans/** — Workout plan management: `WorkoutPlanForm`, `WorkoutPlanCard`, `WorkoutPlanDayForm`, `PlanExerciseRow`, `ExecuteWorkoutForm`.
+* **context/** — `AuthContext` manages JWT token + username in localStorage with `login`, `register`, `logout`, and token expiry validation.
+* **hooks/** — `useAuth`, `useMeals` (TanStack Query hooks), `useWorkouts`, `useWorkoutPlans`.
+* **pages/** — One file per route (see Routes table below).
 * **routes/** — `AppRouter` and `ProtectedRoute` (redirects to `/login` if unauthenticated).
 * **types/** — All TypeScript interfaces in `index.ts`.
 
@@ -90,17 +92,24 @@ Stack: React 18, TypeScript, Vite, Tailwind CSS v4, React Router v6, TanStack Qu
 ---
 
 ### Routes
-| Path | Page            | Auth
-|---|-----------------|---
-|`/` | LandingPage     | Public|
-| `/login`| LoginPage       | Public (redirects if authed) |
-|`/register`	| RegisterPage    | Public (redirects if authed)
-|`/dashboard`	| DashboardPage   | Protected
-|`/meals/log`	| MealLogPage     |Protected
-|`/meals/history`	| MealHistoryPage |	Protected
-|`/workouts`	| WorkoutsPage	   |Protected
-|`/profile`	| ProfilePage	    |Protected
-|`*`	| NotFoundPage    |	Public|
+| Path | Page | Auth |
+|------|------|------|
+| `/` | LandingPage | Public |
+| `/login` | LoginPage | Public (redirects if authed) |
+| `/register` | RegisterPage | Public (redirects if authed) |
+| `/dashboard` | DashboardPage | Protected |
+| `/meals/log` | MealLogPage | Protected |
+| `/meals/history` | MealHistoryPage | Protected |
+| `/workouts` | WorkoutsPage | Protected |
+| `/workouts/log` | WorkoutLogPage | Protected |
+| `/workouts/history` | WorkoutHistoryPage | Protected |
+| `/workouts/plans` | WorkoutPlansPage | Protected |
+| `/workouts/plans/new` | CreatePlanPage | Protected |
+| `/workouts/plans/:id` | PlanDetailPage | Protected |
+| `/workouts/plans/:id/edit` | EditPlanPage | Protected |
+| `/workouts/execute/:dayId` | ExecuteWorkoutPage | Protected |
+| `/profile` | ProfilePage | Protected |
+| `*` | NotFoundPage | Public |
 
 ---
 
@@ -207,12 +216,17 @@ it("submits login form", async () => {
   * one edge case test (empty state, validation error, etc.)
 * Keep tests fast and reliable
 
-> ✅ **Test coverage:** 16 test files with 141 tests covering:
-> - Auth context and hooks
-> - Meal form submission flow
-> - API modules (auth, meals, axios interceptors)
-> - UI components (Button, Input, Card, Modal, ErrorBoundary, etc.)
-> - Page components (LoginPage, RegisterPage, DashboardPage, MealLogPage, etc.)
+> ✅ **Test coverage:** 16 test files covering:
+> - Auth context and hooks (`AuthContext.test.ts`)
+> - Meal components and hooks (`MealForm.test.tsx`, `useMeals.test.tsx`)
+> - Workout components and hooks (`WorkoutForm.test.tsx`, `WorkoutCard.test.tsx`, `useWorkouts.test.tsx`)
+> - Workout plan components and hooks (`WorkoutPlanCard.test.tsx`, `useWorkoutPlans.test.tsx`)
+> - API modules (`auth.test.ts`, `meals.test.ts`, `workouts.test.ts`, `workoutPlans.test.ts`)
+> - UI components (`ErrorBoundary.test.tsx`)
+> - Page components (`LoginPage.test.tsx`, `RegisterPage.test.tsx`)
+> - Routes (`ProtectedRoute.test.tsx`)
+>
+> **Gap:** `axios.ts` interceptors lack direct test coverage.
 
 ---
 
@@ -239,7 +253,7 @@ it("submits login form", async () => {
 * Avoid `alert()`; use UI messages/modals if needed
 
 > ✅ **Error boundaries implemented** at `src/components/ui/ErrorBoundary.tsx`.
-> All protected routes are wrapped with error boundaries in `AppRouter.tsx`.
+> All routes are wrapped with a parent-level error boundary in `AppRouter.tsx`.
 
 ---
 
@@ -253,35 +267,41 @@ The `ErrorBoundary` component:
 - Displays a styled fallback UI with "Try again" button
 - Accepts optional custom `fallback` prop for custom error UI
 
-All protected routes are wrapped with error boundaries in `AppRouter.tsx`:
+All routes are wrapped with a parent-level error boundary in `AppRouter.tsx`:
 ```tsx
-<Route path="/dashboard" element={
-  <ErrorBoundary>
-    <DashboardPage />
-  </ErrorBoundary>
-} />
+export default function AppRouter() {
+  return (
+    <ErrorBoundary>
+      <Routes>
+        {/* All routes are protected by this single boundary */}
+      </Routes>
+    </ErrorBoundary>
+  );
+}
 ```
 
 ### Auth Token Validation
-The auth context should validate token expiry on app load:
+> ✅ **Implemented** — Token expiry validation is in `AuthContext.tsx` via the `isTokenExpired()` function.
+
+The auth context validates token expiry on app load using the exported `isTokenExpired()` helper:
 
 ```tsx
-// In AuthContext initialization
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.exp * 1000 < Date.now()) {
-        // Token expired, clear and redirect
-        logout();
-      }
-    } catch {
-      logout();
-    }
+// In AuthContext.tsx
+export function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.exp) return true;
+    // Add 10s buffer for clock skew
+    return Date.now() >= payload.exp * 1000 - 10000;
+  } catch {
+    return true;
   }
-}, []);
+}
 ```
+
+On initialization, expired tokens are cleared from localStorage automatically.
 
 ### Accessibility Requirements
 - All interactive elements need accessible labels
@@ -312,6 +332,46 @@ if (error.response?.status === 401) {
   window.location.href = '/login';
 }
 ```
+
+---
+
+## Known Issues & Tech Debt
+
+### Anti-Patterns to Avoid/Fix
+
+#### Array Index as Key (HIGH)
+Several components use array index as React key, which causes bugs when items are reordered/removed:
+
+**Affected files:**
+- `MealForm.tsx` — `foods.map((food, i) => <FoodItemRow key={i} ...`
+- `WorkoutForm.tsx` — `exercises.map((exercise, i) => ...`
+- `MealCard.tsx` — `meal.foods.map((food, i) => ...`
+- `WorkoutPlanDayForm.tsx` — `day.exercises.map((exercise, i) => ...`
+- `ExecuteWorkoutForm.tsx` — `exercises.map((exercise, i) => ...`
+
+**Fix:** Generate unique IDs (e.g., `crypto.randomUUID()`) when adding items.
+
+### Accessibility Gaps (MEDIUM)
+
+#### Missing ARIA Labels on Icon Buttons
+- `Modal.tsx` close button (line 22-26)
+- `Navbar.tsx` mobile menu toggle (line 63-74)
+- `FoodItemRow.tsx` remove button (line 57-65)
+
+**Fix:** Add `aria-label` to all icon-only buttons.
+
+#### Modal Focus Not Trapped
+`Modal.tsx` doesn't trap keyboard focus, allowing Tab to escape the modal.
+
+**Fix:** Implement focus trap using `useRef` or a library like `focus-trap-react`.
+
+### Missing Tests (MEDIUM)
+- `axios.ts` interceptors — JWT injection and 401/403 handling untested
+- Complex form validation logic in `WorkoutPlanForm.tsx`, `WorkoutPlanDayForm.tsx`
+
+### Performance Opportunities (LOW)
+- Consider `useMemo` for derived calculations in `WorkoutsPage.tsx` (totalMinutes, totalCalories)
+- No pagination for meal/workout history — may need cursor-based pagination for large datasets
 
 ---
 
