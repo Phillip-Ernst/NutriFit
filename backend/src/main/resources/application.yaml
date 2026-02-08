@@ -8,9 +8,15 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false  # Controlled via logback-spring.xml
     open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: '0'
+    locations: classpath:db/migration
 
 server:
   port: 8080
@@ -36,3 +42,11 @@ jwt:
 # CORS Configuration - comma-separated list of allowed origins
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+# OpenAPI Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method

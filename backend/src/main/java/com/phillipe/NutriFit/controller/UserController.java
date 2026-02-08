@@ -2,6 +2,7 @@ package com.phillipe.NutriFit.controller;
 
 import com.phillipe.NutriFit.dto.request.LoginRequest;
 import com.phillipe.NutriFit.dto.request.RegisterRequest;
+import com.phillipe.NutriFit.dto.response.LoginResponse;
 import com.phillipe.NutriFit.dto.response.UserResponse;
 import com.phillipe.NutriFit.model.entity.User;
 import com.phillipe.NutriFit.service.JwtService;
@@ -41,14 +42,13 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@Valid @RequestBody LoginRequest request) {
-
-
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(authentication.getName());
+            String token = jwtService.generateToken(authentication.getName());
+            return LoginResponse.builder().token(token).build();
         } else {
             throw new BadCredentialsException("Invalid username or password.");
         }

@@ -3,6 +3,7 @@ package com.phillipe.NutriFit.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phillipe.NutriFit.dto.request.FoodItemRequest;
 import com.phillipe.NutriFit.dto.request.MealLogRequest;
+import com.phillipe.NutriFit.dto.response.FoodItemResponse;
 import com.phillipe.NutriFit.dto.response.MealLogResponse;
 import com.phillipe.NutriFit.config.SecurityConfig;
 import com.phillipe.NutriFit.service.JwtService;
@@ -63,6 +64,14 @@ class MealLogControllerTest {
                 .fats(4)
                 .build();
 
+        FoodItemResponse foodItemResponse = FoodItemResponse.builder()
+                .type("Chicken Breast")
+                .calories(165)
+                .protein(31)
+                .carbs(0)
+                .fats(4)
+                .build();
+
         MealLogRequest request = MealLogRequest.builder()
                 .foods(List.of(foodItem))
                 .build();
@@ -74,7 +83,7 @@ class MealLogControllerTest {
                 .totalProtein(31)
                 .totalCarbs(0)
                 .totalFats(4)
-                .foods(List.of(foodItem))
+                .foods(List.of(foodItemResponse))
                 .build();
 
         when(mealLogService.createMeal(any(MealLogRequest.class), eq("testuser")))
@@ -112,6 +121,11 @@ class MealLogControllerTest {
                 .fats(1)
                 .build();
 
+        FoodItemResponse foodResp1 = FoodItemResponse.builder()
+                .type("Rice").calories(200).protein(4).carbs(45).fats(1).build();
+        FoodItemResponse foodResp2 = FoodItemResponse.builder()
+                .type("Beans").calories(150).protein(9).carbs(27).fats(1).build();
+
         MealLogRequest request = MealLogRequest.builder()
                 .foods(List.of(food1, food2))
                 .build();
@@ -123,7 +137,7 @@ class MealLogControllerTest {
                 .totalProtein(13)
                 .totalCarbs(72)
                 .totalFats(2)
-                .foods(List.of(food1, food2))
+                .foods(List.of(foodResp1, foodResp2))
                 .build();
 
         when(mealLogService.createMeal(any(MealLogRequest.class), eq("testuser")))
@@ -220,6 +234,14 @@ class MealLogControllerTest {
                 .fats(null)
                 .build();
 
+        FoodItemResponse foodItemResponse = FoodItemResponse.builder()
+                .type("Unknown Food")
+                .calories(null)
+                .protein(null)
+                .carbs(null)
+                .fats(null)
+                .build();
+
         MealLogRequest request = MealLogRequest.builder()
                 .foods(List.of(foodItem))
                 .build();
@@ -231,7 +253,7 @@ class MealLogControllerTest {
                 .totalProtein(0)
                 .totalCarbs(0)
                 .totalFats(0)
-                .foods(List.of(foodItem))
+                .foods(List.of(foodItemResponse))
                 .build();
 
         when(mealLogService.createMeal(any(MealLogRequest.class), eq("testuser")))
@@ -250,7 +272,7 @@ class MealLogControllerTest {
 
     @Test
     void getMyMeals_success_shouldReturnMealsList() throws Exception {
-        FoodItemRequest foodItem = FoodItemRequest.builder()
+        FoodItemResponse foodItem = FoodItemResponse.builder()
                 .type("Oatmeal")
                 .calories(150)
                 .protein(5)
