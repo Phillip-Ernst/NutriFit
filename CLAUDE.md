@@ -53,7 +53,7 @@ Primary goals:
 ### Critical (Must Fix Before Production)
 - [x] **JWT secret externalized** — JWT secret now loaded from `JWT_SECRET` environment variable (falls back to generated secret for dev only).
 - [x] **CORS configured with allowlist** — `WebConfig.java` now uses explicit origin allowlist instead of reflecting any Origin header.
-- [ ] **No database migrations** — Using `ddl-auto=update` risks data loss. Implement Flyway or Liquibase.
+- [x] **No database migrations** — Implemented Flyway with `V1__initial_schema.sql`. Changed `ddl-auto` to `validate`.
 - [x] **Global exception handler added** — `GlobalExceptionHandler` with `@RestControllerAdvice` returns structured JSON errors.
 
 ### High Priority
@@ -65,13 +65,13 @@ Primary goals:
 
 ### Medium Priority
 - [x] Spring Security dependency enabled in `pom.xml`
-- [ ] Login endpoint returns plain text on failure (inconsistent with JSON API)
+- [x] Login endpoint returns JSON — Now returns `{"token": "..."}` instead of plain text; frontend updated to match.
 - [x] Controller tests (MockMvc) added for all controllers (MealLog, WorkoutLog, WorkoutPlan, User, Exercise, Health)
 - [x] Auth context validates token expiry on app load (`isTokenExpired()` in `AuthContext.tsx`)
 - [x] Structured logging added via `RequestLoggingFilter` for request/response logging
-- [ ] **DTO reuse anti-pattern** — `MealLogResponse` uses `FoodItemRequest` instead of separate response DTO
-- [ ] **Unused OAuth2 dependency** — `spring-boot-starter-oauth2-client` in pom.xml but not used
-- [ ] **No OpenAPI documentation** — Missing Springdoc annotations for auto-generated API docs
+- [x] **DTO reuse fixed** — Created `FoodItemResponse` for `MealLogResponse`; request/response DTOs now separate.
+- [x] **Unused OAuth2 dependency removed** — Removed `spring-boot-starter-oauth2-client` from pom.xml.
+- [x] **OpenAPI documentation added** — Springdoc configured; Swagger UI at `/swagger-ui.html`, API docs at `/api-docs`.
 
 ### Low Priority (Tech Debt)
 - [ ] **Frontend accessibility gaps** — Icon-only buttons missing `aria-label` in Modal, Navbar, FoodItemRow

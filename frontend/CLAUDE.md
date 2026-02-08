@@ -117,7 +117,7 @@ Stack: React 18, TypeScript, Vite, Tailwind CSS v4, React Router v6, TanStack Qu
 * Functional components with default exports
 * UI components accept `className` prop for Tailwind overrides
 * API functions return unwrapped `response.data` (not the Axios response)
-* Login endpoint returns plain-text JWT (not JSON) — handled via `transformResponse` override in `api/auth.ts`
+* Login endpoint returns JSON `{"token": "..."}` — `api/auth.ts` extracts the token from `response.data.token`
 * Nullable backend Integer fields mapped to `number | null` in TypeScript:
   * For display: use `val ?? 0`
 * TanStack Query key for meals: `['meals', 'mine']`
@@ -176,7 +176,7 @@ src/
 
 #### API Layer
 * `api/auth.ts`:
-  * handles plain-text token response correctly
+  * handles JSON `{"token": "..."}` response, extracting `response.data.token`
   * attaches headers correctly via axios instance
 * `api/meals.ts`:
   * returns `response.data` only

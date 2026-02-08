@@ -22,12 +22,12 @@ describe('auth API', () => {
       await expect(loginUser({ username: '', password: 'password123' })).rejects.toThrow();
     });
 
-    it('returns plain text token (not JSON)', async () => {
+    it('extracts token from JSON response', async () => {
       const token = await loginUser({ username: 'testuser', password: 'password123' });
 
-      // Token should not be wrapped in JSON
-      expect(token).not.toContain('{');
-      expect(token).not.toContain('"');
+      // Token should be a valid JWT (three parts separated by dots)
+      expect(token).toBeDefined();
+      expect(token.split('.')).toHaveLength(3);
     });
   });
 

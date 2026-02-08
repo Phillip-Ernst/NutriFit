@@ -1,6 +1,5 @@
 package com.phillipe.NutriFit.dto.response;
 
-import com.phillipe.NutriFit.dto.request.FoodItemRequest;
 import lombok.*;
 
 import java.time.Instant;
@@ -19,5 +18,5 @@ public class MealLogResponse {
     private Integer totalCarbs;
     private Integer totalFats;
 
-    private List<FoodItemRequest> foods;
+    private List<FoodItemResponse> foods;
 }

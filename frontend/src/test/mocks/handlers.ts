@@ -262,14 +262,14 @@ export const handlers = [
 
     const user = mockUsers.get(body.username);
     if (!user || user.password !== body.password) {
-      return new HttpResponse('Invalid username or password', { status: 401 });
+      return HttpResponse.json(
+        { error: 'UNAUTHORIZED', message: 'Invalid username or password' },
+        { status: 401 },
+      );
     }
 
-    // Return plain text JWT token (matching actual backend behavior)
-    return new HttpResponse(createMockToken(body.username), {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain' },
-    });
+    // Return JSON with token field (matching updated backend behavior)
+    return HttpResponse.json({ token: createMockToken(body.username) });
   }),
 
   http.post('*/api/register', async ({ request }) => {
