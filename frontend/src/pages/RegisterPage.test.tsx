@@ -72,10 +72,11 @@ describe('RegisterPage', () => {
       );
     });
 
-    it('renders nothing while auth is loading', () => {
-      const { container } = renderRegisterPage({ isLoading: true });
+    it('renders loading spinner while auth is loading', () => {
+      renderRegisterPage({ isLoading: true });
 
-      expect(container.firstChild).toBeNull();
+      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.queryByLabelText(/username/i)).not.toBeInTheDocument();
     });
   });
 

@@ -70,10 +70,11 @@ describe('LoginPage', () => {
       );
     });
 
-    it('renders nothing while auth is loading', () => {
-      const { container } = renderLoginPage({ isLoading: true });
+    it('renders loading spinner while auth is loading', () => {
+      renderLoginPage({ isLoading: true });
 
-      expect(container.firstChild).toBeNull();
+      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.queryByLabelText(/username/i)).not.toBeInTheDocument();
     });
   });
 
@@ -119,7 +120,7 @@ describe('LoginPage', () => {
       expect(button).toBeDisabled();
     });
 
-    it('displays error message on login failure', async () => {
+    it('displays error message with register suggestion on login failure', async () => {
       const mockLogin = vi.fn().mockRejectedValue(new Error('Invalid credentials'));
       const user = userEvent.setup();
 
@@ -132,6 +133,11 @@ describe('LoginPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Invalid username or password.')).toBeInTheDocument();
       });
+
+      // Verify the error box contains a register link
+      const registerLink = screen.getByRole('link', { name: /register here/i });
+      expect(registerLink).toBeInTheDocument();
+      expect(registerLink).toHaveAttribute('href', '/register');
     });
 
     it('clears error message on new form submission', async () => {

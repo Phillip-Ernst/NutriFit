@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function LoginPage() {
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -11,7 +12,13 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e: FormEvent) => {
@@ -57,7 +64,17 @@ export default function LoginPage() {
             placeholder="Enter your password"
           />
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && (
+            <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 text-center">
+              <p className="text-red-400 font-medium">{error}</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-emerald-400 hover:text-emerald-300 underline">
+                  Register here
+                </Link>
+              </p>
+            </div>
+          )}
 
           <Button type="submit" isLoading={loading} className="w-full">
             Login
