@@ -10,21 +10,21 @@ Primary goals:
 - Simple, consistent React UI that matches API contracts
 
 ## Repo layout
-- backend/NutriFit/ ... Spring Boot project (Maven)
+- backend/ ... Spring Boot project (Maven)
 - frontend/ ... React (Vite)
 
 ## How to run (dev)
 ### Backend
-- From backend/NutriFit:
-    - mvn spring-boot:run
-    - mvn test
+- From backend/:
+    - ./mvnw spring-boot:run
+    - ./mvnw test
 
 ### Frontend
-- From frontend:
+- From frontend/:
     - npm install
     - npm run dev
     - npm run build
-    - npm test (if configured)
+    - npm test
 
 ## Environment & secrets rules
 - Never hardcode secrets (JWT secrets, DB passwords, API keys).
@@ -48,32 +48,8 @@ Primary goals:
 
 ---
 
-## Known Architecture Issues (To Address)
+## Remaining Tech Debt (Low Priority)
 
-### Critical (Must Fix Before Production)
-- [x] **JWT secret externalized** — JWT secret now loaded from `JWT_SECRET` environment variable (falls back to generated secret for dev only).
-- [x] **CORS configured with allowlist** — `WebConfig.java` now uses explicit origin allowlist instead of reflecting any Origin header.
-- [x] **No database migrations** — Implemented Flyway with `V1__initial_schema.sql`. Changed `ddl-auto` to `validate`.
-- [x] **Global exception handler added** — `GlobalExceptionHandler` with `@RestControllerAdvice` returns structured JSON errors.
-
-### High Priority
-- [x] **Frontend error boundaries implemented** — `ErrorBoundary` component at `src/components/ui/ErrorBoundary.tsx`, wrapping all routes in `AppRouter.tsx`.
-- [x] **Test coverage improved** — Backend: ~80% controller coverage with MockMvc tests. Frontend: 16 test files covering components, hooks, API, and pages.
-- [x] **.env file committed** — Verified `.env` was never committed; `.gitignore` properly configured.
-- [x] **N+1 query in WorkoutPlanServiceImpl** — Fixed with `@EntityGraph(attributePaths = {"days", "days.exercises"})` on repository methods.
-- [x] **Missing numeric validation on DTOs** — Added `@Min(0)` validation to `FoodItemRequest`, `ExerciseItemRequest`, `WorkoutPlanExerciseRequest`, and `WorkoutPlanDayRequest`.
-
-### Medium Priority
-- [x] Spring Security dependency enabled in `pom.xml`
-- [x] Login endpoint returns JSON — Now returns `{"token": "..."}` instead of plain text; frontend updated to match.
-- [x] Controller tests (MockMvc) added for all controllers (MealLog, WorkoutLog, WorkoutPlan, User, Exercise, Health)
-- [x] Auth context validates token expiry on app load (`isTokenExpired()` in `AuthContext.tsx`)
-- [x] Structured logging added via `RequestLoggingFilter` for request/response logging
-- [x] **DTO reuse fixed** — Created `FoodItemResponse` for `MealLogResponse`; request/response DTOs now separate.
-- [x] **Unused OAuth2 dependency removed** — Removed `spring-boot-starter-oauth2-client` from pom.xml.
-- [x] **OpenAPI documentation added** — Springdoc configured; Swagger UI at `/swagger-ui.html`, API docs at `/api-docs`.
-
-### Low Priority (Tech Debt)
 - [ ] **Frontend accessibility gaps** — Icon-only buttons missing `aria-label` in Modal, Navbar, FoodItemRow
 - [ ] **Modal focus not trapped** — Modal component doesn't implement keyboard focus trap
 - [ ] **Array index as React key** — Several components use index as key (MealForm, WorkoutForm, MealCard, etc.)

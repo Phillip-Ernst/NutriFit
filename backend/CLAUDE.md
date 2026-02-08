@@ -27,8 +27,7 @@ com/phillipe/NutriFit/
 │   ├── WebConfig.java
 │   ├── GlobalExceptionHandler.java
 │   └── filter/
-│       ├── JwtFilter.java
-│       └── RequestLoggingFilter.java
+│       └── JwtFilter.java
 ├── controller/                # REST controllers
 │   ├── UserController.java
 │   ├── MealLogController.java
@@ -76,12 +75,16 @@ com/phillipe/NutriFit/
 │   │   ├── WorkoutPlanDayRequest.java
 │   │   └── WorkoutPlanExerciseRequest.java
 │   └── response/
+│       ├── ErrorResponse.java
+│       ├── FoodItemResponse.java
+│       ├── LoginResponse.java
 │       ├── MealLogResponse.java
+│       ├── PredefinedExerciseResponse.java
+│       ├── UserResponse.java
 │       ├── WorkoutLogResponse.java
-│       ├── WorkoutPlanResponse.java
 │       ├── WorkoutPlanDayResponse.java
 │       ├── WorkoutPlanExerciseResponse.java
-│       └── PredefinedExerciseResponse.java
+│       └── WorkoutPlanResponse.java
 └── security/                  # Security-related classes
     └── UserPrincipal.java
 ```
@@ -166,11 +169,16 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 ### Database & ORM
 #### JPA/Hibernate
 * Uses JPA/Hibernate
-* `ddl-auto=update` in dev (auto-creates/updates tables)
+* `ddl-auto=validate` (Hibernate validates schema matches entities)
 
-> ⚠️ **KNOWN ISSUE:** No database migration tool configured.
-> `ddl-auto=update` is unsafe for production (no rollback, no audit trail).
-> Before production, implement Flyway or Liquibase for schema migrations.
+#### Flyway Migrations
+> ✅ **Implemented** — Flyway manages database schema migrations.
+
+* Migration files: `src/main/resources/db/migration/V{version}__{description}.sql`
+* Current migrations:
+  - `V1__initial_schema.sql` — Creates all tables (users, meal_log, workout_log, workout_plan, etc.)
+* `baseline-on-migrate: true` — Allows Flyway to work with existing databases
+* Tests use `ddl-auto=create-drop` with Flyway disabled for isolation
 
 #### Relationships
 * User (1) → many MealLog
@@ -198,9 +206,13 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 
 All endpoints are under `/api`:
 
+**Documentation:**
+* Swagger UI: `/swagger-ui.html`
+* OpenAPI spec: `/api-docs`
+
 **User/Auth:**
-* `POST /register` — public, creates user
-* `POST /login` — public, returns JWT token
+* `POST /register` — public, creates user, returns `UserResponse`
+* `POST /login` — public, returns `{"token": "..."}`
 
 **Meals:**
 * `POST /meals` — authenticated, creates meal log with food items
@@ -443,51 +455,9 @@ return mealLogRepository.findByUser(user);
 
 ---
 
-## Known Issues & Tech Debt
+## Remaining Tech Debt
 
-### High Priority
-
-#### N+1 Query in WorkoutPlanServiceImpl
-**File:** `service/impl/WorkoutPlanServiceImpl.java`
-
-The `getMyPlans()` method returns all plans with lazy-loaded `days` and `exercises`:
-```java
-return workoutPlanRepo.findByUserIdOrderByCreatedAtDesc(user.getId())
-    .stream()
-    .map(this::toResponse)  // Triggers lazy load per plan
-    .toList();
-```
-**Fix:** Use `@EntityGraph` or `JOIN FETCH` in the repository query.
-
-#### Missing Numeric Validation on DTOs
-**Files:** `dto/request/FoodItemRequest.java`, `ExerciseItemRequest.java`, `WorkoutLogRequest.java`
-
-Numeric fields (calories, protein, sets, reps, duration) lack validation:
-```java
-// Current (no validation)
-private Integer calories;
-
-// Should be
-@Min(0)
-@Max(10000)
-private Integer calories;
-```
-
-### Medium Priority
-
-#### DTO Reuse Anti-Pattern
-**File:** `dto/response/MealLogResponse.java`
-
-Uses `FoodItemRequest` in response instead of a separate `FoodItemResponse`:
-```java
-private List<FoodItemRequest> foods;  // Should be FoodItemResponse
-```
-This couples request validation with response serialization.
-
-#### Unused OAuth2 Dependency
-**File:** `pom.xml`
-
-`spring-boot-starter-oauth2-client` is included but not used. Remove if not planned.
+### Low Priority
 
 #### Hardcoded ROLE_USER
 **File:** `security/UserPrincipal.java`
@@ -498,17 +468,7 @@ public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of(new SimpleGrantedAuthority("ROLE_USER"));
 }
 ```
-
-### Low Priority
-
-#### No OpenAPI Documentation
-Missing Springdoc annotations for auto-generated API docs. Consider adding:
-```xml
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-</dependency>
-```
+Consider adding role-based authorization if needed in the future.
 
 #### Short Method Names
 `nz()` helper in service implementations could be more descriptive (`nullToZero()`)
