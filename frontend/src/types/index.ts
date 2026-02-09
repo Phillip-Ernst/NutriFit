@@ -127,3 +127,62 @@ export interface WorkoutLogFromPlanRequest {
   workoutPlanDayId: number;
   exercises: ExerciseItem[];
 }
+
+// === Profile ===
+
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY';
+
+export type UnitPreference = 'IMPERIAL' | 'METRIC';
+
+export interface ProfileResponse {
+  id: number;
+  username: string;
+  birthYear: number | null;
+  age: number | null;
+  gender: Gender | null;
+  unitPreference: UnitPreference;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProfileUpdateRequest {
+  birthYear?: number | null;
+  gender?: Gender | null;
+  unitPreference?: UnitPreference;
+}
+
+// === Body Measurements ===
+
+export interface MeasurementRequest {
+  heightCm?: number | null;
+  weightKg?: number | null;
+  bodyFatPercent?: number | null;
+  neckCm?: number | null;
+  shouldersCm?: number | null;
+  chestCm?: number | null;
+  bicepsCm?: number | null;
+  forearmsCm?: number | null;
+  waistCm?: number | null;
+  hipsCm?: number | null;
+  thighsCm?: number | null;
+  calvesCm?: number | null;
+  notes?: string | null;
+}
+
+export interface MeasurementResponse {
+  id: number;
+  recordedAt: string;
+  heightCm: number | null;
+  weightKg: number | null;
+  bodyFatPercent: number | null;
+  neckCm: number | null;
+  shouldersCm: number | null;
+  chestCm: number | null;
+  bicepsCm: number | null;
+  forearmsCm: number | null;
+  waistCm: number | null;
+  hipsCm: number | null;
+  thighsCm: number | null;
+  calvesCm: number | null;
+  notes: string | null;
+}

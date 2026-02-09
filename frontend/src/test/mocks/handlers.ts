@@ -12,6 +12,10 @@ import type {
   LoginRequest,
   RegisterRequest,
   User,
+  ProfileResponse,
+  ProfileUpdateRequest,
+  MeasurementResponse,
+  MeasurementRequest,
 } from '../../types';
 
 const mockWorkouts: WorkoutLogResponse[] = [
@@ -255,6 +259,56 @@ const mockUsers: Map<string, { id: number; username: string; password: string }>
   ['testuser', { id: 1, username: 'testuser', password: 'password123' }],
 ]);
 
+// Mock profile data
+let mockProfile: ProfileResponse = {
+  id: 1,
+  username: 'testuser',
+  birthYear: 1990,
+  age: 36,
+  gender: 'MALE',
+  unitPreference: 'IMPERIAL',
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-28T00:00:00Z',
+};
+
+// Mock measurements data
+const mockMeasurements: MeasurementResponse[] = [
+  {
+    id: 1,
+    recordedAt: '2026-01-28T10:00:00Z',
+    heightCm: 178,
+    weightKg: 80,
+    bodyFatPercent: 15,
+    neckCm: 38,
+    shouldersCm: 120,
+    chestCm: 100,
+    bicepsCm: 35,
+    forearmsCm: 28,
+    waistCm: 85,
+    hipsCm: 100,
+    thighsCm: 60,
+    calvesCm: 38,
+    notes: 'Morning measurement',
+  },
+  {
+    id: 2,
+    recordedAt: '2026-01-21T10:00:00Z',
+    heightCm: 178,
+    weightKg: 81,
+    bodyFatPercent: 16,
+    neckCm: null,
+    shouldersCm: null,
+    chestCm: 99,
+    bicepsCm: 34,
+    forearmsCm: null,
+    waistCm: 86,
+    hipsCm: null,
+    thighsCm: null,
+    calvesCm: null,
+    notes: null,
+  },
+];
+
 export const handlers = [
   // Auth
   http.post('*/api/login', async ({ request }) => {
@@ -462,5 +516,68 @@ export const handlers = [
 
   http.get('*/api/exercises/categories', () => {
     return HttpResponse.json(mockCategories);
+  }),
+
+  // Profile
+  http.get('*/api/profile', () => {
+    return HttpResponse.json(mockProfile);
+  }),
+
+  http.put('*/api/profile', async ({ request }) => {
+    const body = (await request.json()) as ProfileUpdateRequest;
+
+    if (body.birthYear !== undefined) {
+      mockProfile.birthYear = body.birthYear;
+      mockProfile.age = body.birthYear ? new Date().getFullYear() - body.birthYear : null;
+    }
+    if (body.gender !== undefined) {
+      mockProfile.gender = body.gender;
+    }
+    if (body.unitPreference !== undefined) {
+      mockProfile.unitPreference = body.unitPreference;
+    }
+    mockProfile.updatedAt = new Date().toISOString();
+
+    return HttpResponse.json(mockProfile);
+  }),
+
+  // Measurements
+  http.get('*/api/measurements', () => {
+    return HttpResponse.json(mockMeasurements);
+  }),
+
+  http.get('*/api/measurements/latest', () => {
+    if (mockMeasurements.length === 0) {
+      return new HttpResponse(null, { status: 204 });
+    }
+    return HttpResponse.json(mockMeasurements[0]);
+  }),
+
+  http.post('*/api/measurements', async ({ request }) => {
+    const body = (await request.json()) as MeasurementRequest;
+
+    const newMeasurement: MeasurementResponse = {
+      id: Date.now(),
+      recordedAt: new Date().toISOString(),
+      heightCm: body.heightCm ?? null,
+      weightKg: body.weightKg ?? null,
+      bodyFatPercent: body.bodyFatPercent ?? null,
+      neckCm: body.neckCm ?? null,
+      shouldersCm: body.shouldersCm ?? null,
+      chestCm: body.chestCm ?? null,
+      bicepsCm: body.bicepsCm ?? null,
+      forearmsCm: body.forearmsCm ?? null,
+      waistCm: body.waistCm ?? null,
+      hipsCm: body.hipsCm ?? null,
+      thighsCm: body.thighsCm ?? null,
+      calvesCm: body.calvesCm ?? null,
+      notes: body.notes ?? null,
+    };
+
+    return HttpResponse.json(newMeasurement, { status: 201 });
+  }),
+
+  http.delete('*/api/measurements/:id', () => {
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

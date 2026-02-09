@@ -53,9 +53,13 @@ com/phillipe/NutriFit/
 │   └── WorkoutPlanDayRepository.java
 ├── model/                     # Domain models
 │   ├── ExerciseCategory.java        # Enum
+│   ├── Gender.java                  # Enum
 │   ├── PredefinedExercise.java      # Enum
+│   ├── UnitPreference.java          # Enum
 │   ├── entity/                      # JPA entities
 │   │   ├── User.java
+│   │   ├── UserProfile.java
+│   │   ├── BodyMeasurement.java
 │   │   ├── MealLog.java
 │   │   ├── WorkoutLog.java
 │   │   ├── WorkoutPlan.java
@@ -130,12 +134,30 @@ java -jar target/NutriFit-0.0.1-SNAPSHOT.jar
 ## Environment & Configuration
 
 ### PostgreSQL
-Requires PostgreSQL. DB connection is configured via environment variables in NutriFit-backend.env (gitignored);
-* `DB_HOST`
-* `DB_PORT`
-* `DB_NAME`
-* `DB_USER`
-* `DB_PASSWORD`
+Requires PostgreSQL. DB connection is configured via environment variables (see `.env.example`):
+* `DB_HOST` (default: localhost)
+* `DB_PORT` (default: 5432)
+* `DB_NAME` (default: nutrifit)
+* `DB_USER` (default: nutrifit)
+* `DB_PASSWORD` (default: nutrifit)
+
+#### Local Development Setup
+```bash
+# Start PostgreSQL via Docker
+./scripts/db-setup.sh start
+
+# Run Flyway migrations
+./scripts/db-setup.sh migrate
+
+# Start the app
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+
+# Other commands
+./scripts/db-setup.sh info    # Show migration status
+./scripts/db-setup.sh shell   # Open psql shell
+./scripts/db-setup.sh reset   # Reset database (deletes all data)
+./scripts/db-setup.sh stop    # Stop PostgreSQL
+```
 
 ### Server / API Base Path
 * Server port: **8080**
@@ -177,10 +199,26 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 * Migration files: `src/main/resources/db/migration/V{version}__{description}.sql`
 * Current migrations:
   - `V1__initial_schema.sql` — Creates all tables (users, meal_log, workout_log, workout_plan, etc.)
+  - `V2__add_profile_and_measurements.sql` — Adds user_profile and body_measurement tables
 * `baseline-on-migrate: true` — Allows Flyway to work with existing databases
 * Tests use `ddl-auto=create-drop` with Flyway disabled for isolation
 
+##### Adding New Migrations
+1. Create file: `src/main/resources/db/migration/V{next}__{description}.sql`
+   - Naming: `V3__add_feature_name.sql` (double underscore after version)
+2. Write SQL (PostgreSQL syntax)
+3. Run migration: `./scripts/db-setup.sh migrate`
+4. Verify: `./scripts/db-setup.sh info`
+
+##### Migration Best Practices
+- Never modify existing migration files after they've been applied
+- Use `IF NOT EXISTS` for safety when possible
+- Include `CREATE INDEX` for foreign keys and frequent query columns
+- Test migrations locally before committing
+
 #### Relationships
+* User (1) → one UserProfile (lazy, auto-created on first access)
+* User (1) → many BodyMeasurement (historical measurements)
 * User (1) → many MealLog
 * User (1) → many WorkoutLog
 * User (1) → many WorkoutPlan
@@ -234,6 +272,16 @@ All endpoints are under `/api`:
 **Exercises:**
 * `GET /exercises/predefined` — returns predefined exercises (optional category filter)
 * `GET /exercises/categories` — returns all exercise categories
+
+**Profile:**
+* `GET /profile` — authenticated, returns user profile (auto-creates if not exists)
+* `PUT /profile` — authenticated, updates profile (birthYear, gender, unitPreference)
+
+**Measurements:**
+* `POST /measurements` — authenticated, creates body measurement record
+* `GET /measurements` — authenticated, returns all measurements (newest first)
+* `GET /measurements/latest` — authenticated, returns most recent measurement
+* `DELETE /measurements/{id}` — authenticated, deletes a measurement
 
 ---
 
