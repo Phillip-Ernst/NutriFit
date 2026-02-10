@@ -1,0 +1,30 @@
+# Testcontainers PostgreSQL
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:16:///testdb
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    username: test
+    password: test
+
+  # JPA/Hibernate - use create-drop for test isolation
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create-drop
+
+  # Disable Flyway for tests (Hibernate manages schema via ddl-auto)
+  flyway:
+    enabled: false
+
+# Disable OpenAPI for tests
+springdoc:
+  api-docs:
+    enabled: false
+
+# JWT Configuration for tests (32+ chars for HS256)
+jwt:
+  secret: test-jwt-secret-key-for-unit-tests-minimum-32-chars
+
+# CORS Configuration for tests
+cors:
+  allowed-origins: http://localhost:5173,http://localhost:3000

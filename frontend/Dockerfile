@@ -17,11 +17,14 @@ RUN npm run build
 # Runtime stage - nginx for serving static files
 FROM nginx:alpine
 
+# Build argument for nginx config (default: nginx.conf for Docker Compose)
+ARG NGINX_CONFIG=nginx.conf
+
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration (nginx.conf for local, nginx.aws.conf for AWS)
+COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

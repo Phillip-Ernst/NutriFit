@@ -24,6 +24,8 @@ com/phillipe/NutriFit/
 ├── NutriFitApplication.java
 ├── config/                    # Configuration classes
 │   ├── SecurityConfig.java
+│   ├── WebConfig.java
+│   ├── GlobalExceptionHandler.java
 │   └── filter/
 │       └── JwtFilter.java
 ├── controller/                # REST controllers
@@ -31,7 +33,8 @@ com/phillipe/NutriFit/
 │   ├── MealLogController.java
 │   ├── WorkoutLogController.java
 │   ├── WorkoutPlanController.java
-│   └── ExerciseController.java
+│   ├── ExerciseController.java
+│   └── HealthController.java
 ├── service/                   # Business logic (interfaces + implementations)
 │   ├── JwtService.java
 │   ├── MyUserDetailsService.java
@@ -72,12 +75,16 @@ com/phillipe/NutriFit/
 │   │   ├── WorkoutPlanDayRequest.java
 │   │   └── WorkoutPlanExerciseRequest.java
 │   └── response/
+│       ├── ErrorResponse.java
+│       ├── FoodItemResponse.java
+│       ├── LoginResponse.java
 │       ├── MealLogResponse.java
+│       ├── PredefinedExerciseResponse.java
+│       ├── UserResponse.java
 │       ├── WorkoutLogResponse.java
-│       ├── WorkoutPlanResponse.java
 │       ├── WorkoutPlanDayResponse.java
 │       ├── WorkoutPlanExerciseResponse.java
-│       └── PredefinedExerciseResponse.java
+│       └── WorkoutPlanResponse.java
 └── security/                  # Security-related classes
     └── UserPrincipal.java
 ```
@@ -146,8 +153,10 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 #### Token Details
 * Token expiry: **1 hour**
 * Password hashing: **BCrypt strength 12**
-* JWT secret key is **generated in-memory on startup (not persisted)**
-  *    Tokens invalidate when the server restarts.
+
+> ✅ **JWT secret externalized** — JWT secret is loaded from `JWT_SECRET` environment variable.
+> `JwtService.java` validates minimum 32-character key length for HS256 security.
+> Falls back to generated secret only in dev when env var is missing (logged as warning).
 
 #### Spring Security Configuration
 * Security config lives in: `config/SecurityConfig.java`
@@ -160,7 +169,16 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 ### Database & ORM
 #### JPA/Hibernate
 * Uses JPA/Hibernate
-* ddl-auto=update in dev (auto-creates/updates tables)
+* `ddl-auto=validate` (Hibernate validates schema matches entities)
+
+#### Flyway Migrations
+> ✅ **Implemented** — Flyway manages database schema migrations.
+
+* Migration files: `src/main/resources/db/migration/V{version}__{description}.sql`
+* Current migrations:
+  - `V1__initial_schema.sql` — Creates all tables (users, meal_log, workout_log, workout_plan, etc.)
+* `baseline-on-migrate: true` — Allows Flyway to work with existing databases
+* Tests use `ddl-auto=create-drop` with Flyway disabled for isolation
 
 #### Relationships
 * User (1) → many MealLog
@@ -188,9 +206,13 @@ Requires PostgreSQL. DB connection is configured via environment variables in Nu
 
 All endpoints are under `/api`:
 
+**Documentation:**
+* Swagger UI: `/swagger-ui.html`
+* OpenAPI spec: `/api-docs`
+
 **User/Auth:**
-* `POST /register` — public, creates user
-* `POST /login` — public, returns JWT token
+* `POST /register` — public, creates user, returns `UserResponse`
+* `POST /login` — public, returns `{"token": "..."}`
 
 **Meals:**
 * `POST /meals` — authenticated, creates meal log with food items
@@ -324,7 +346,11 @@ Coverage Expectations
   * at least one edge case
 * Keep tests fast and deterministic (no DB/network).
 
-How to  run tests
+> ✅ **Controller test coverage:** MockMvc tests exist for all controllers:
+> - `MealLogControllerTest`, `WorkoutLogControllerTest`, `WorkoutPlanControllerTest`
+> - `UserControllerTest`, `ExerciseControllerTest`, `HealthControllerTest`
+
+How to run tests
 ```
 ./mvnw test
 ```
@@ -352,5 +378,99 @@ Ask whether the user wants:
 * a quick patch
 * or a proper refactor
 Prefer existing patterns already established in the repo.
+
+---
+
+## Critical Patterns to Follow
+
+### JWT Configuration
+```java
+// ❌ WRONG: Secret regenerated on every restart
+private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+// ✅ CORRECT: Secret from environment
+@Value("${jwt.secret}")
+private String jwtSecret;
+
+@PostConstruct
+private void init() {
+    this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+}
+```
+- NEVER generate JWT secret in constructor
+- Use `@Value("${jwt.secret}")` from environment
+- Minimum 256-bit (32 character) secret for HS256
+
+### Exception Handling
+> ✅ **Implemented** — `GlobalExceptionHandler.java` in `config/` package.
+
+All controllers have validation errors handled consistently via `@RestControllerAdvice`:
+- `MethodArgumentNotValidException` → field-level validation errors
+- `UsernameNotFoundException` → 401 Unauthorized
+- `BadCredentialsException` → 401 Unauthorized
+- `AccessDeniedException` → 403 Forbidden
+- Generic exceptions → 500 Internal Server Error with safe message
+
+Error response format matches the root CLAUDE.md specification.
+
+### CORS Configuration
+> ✅ **Implemented** — `WebConfig.java` has explicit origin allowlist from `CORS_ALLOWED_ORIGINS` env var.
+
+```java
+// ❌ WRONG: Reflects any origin (security vulnerability)
+response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+
+// ✅ CORRECT: Explicit allowlist (current implementation)
+@Value("${cors.allowed-origins}")
+private String allowedOrigins;  // Comma-separated list
+
+@Override
+public void addCorsMappings(CorsRegistry registry) {
+    registry.addMapping("/api/**")
+        .allowedOrigins(allowedOrigins.split(","))
+        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        .allowCredentials(true);
+}
+```
+
+**Note:** CORS is disabled in `SecurityConfig.java` (`cors.disable()`) because it's handled manually via `WebConfig`. This works but may cause confusion.
+
+### Database Changes
+- NEVER use `ddl-auto=update` in production
+- All schema changes must go through Flyway migrations
+- Migration files: `src/main/resources/db/migration/V{version}__{description}.sql`
+- Test migrations in CI before deployment
+
+### Null Safety in Services
+```java
+// ❌ WRONG: May throw NPE if user not found
+User user = userRepository.findByUsername(username);
+return mealLogRepository.findByUser(user); // NPE if user is null
+
+// ✅ CORRECT: Handle missing user explicitly
+User user = userRepository.findByUsername(username)
+    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+return mealLogRepository.findByUser(user);
+```
+
+---
+
+## Remaining Tech Debt
+
+### Low Priority
+
+#### Hardcoded ROLE_USER
+**File:** `security/UserPrincipal.java`
+
+All users get `ROLE_USER` without role-based authorization support:
+```java
+public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+}
+```
+Consider adding role-based authorization if needed in the future.
+
+#### Short Method Names
+`nz()` helper in service implementations could be more descriptive (`nullToZero()`)
 
 ---

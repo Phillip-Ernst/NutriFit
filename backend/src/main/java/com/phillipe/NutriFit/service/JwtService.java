@@ -2,16 +2,14 @@ package com.phillipe.NutriFit.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,23 +18,18 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
+    private final String secretKey;
 
-        private String secretKey;
-
-        public JwtService() {
-            secretKey = generateSecretKey();
+    public JwtService(@Value("${jwt.secret}") String secretKey) {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalArgumentException("JWT secret must be configured via jwt.secret property");
         }
-
-        public String generateSecretKey() {
-            try {
-                KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-                SecretKey secretKey = keyGen.generateKey();
-
-                return Base64.getEncoder().encodeToString(secretKey.getEncoded());
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("Error generating secret key", e);
-            }
+        // Ensure minimum key length for HS256 (256 bits = 32 bytes, base64 encoded = ~44 chars)
+        if (secretKey.length() < 32) {
+            throw new IllegalArgumentException("JWT secret must be at least 32 characters for HS256");
         }
+        this.secretKey = secretKey;
+    }
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
@@ -51,7 +44,7 @@ public class JwtService {
     }
 
     private SecretKey getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey); // secretKey should be Base64
+        byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
