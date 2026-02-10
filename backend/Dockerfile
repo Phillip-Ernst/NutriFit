@@ -22,6 +22,7 @@ RUN apk add --no-cache wget
 
 # Create non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
+
 USER spring:spring
 
 # Copy the built jar
