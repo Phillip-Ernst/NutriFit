@@ -3,6 +3,7 @@ package com.phillipe.NutriFit.service.impl;
 import com.phillipe.NutriFit.repository.MealLogRepository;
 import com.phillipe.NutriFit.dto.request.FoodItemRequest;
 import com.phillipe.NutriFit.dto.request.MealLogRequest;
+import com.phillipe.NutriFit.dto.response.FoodItemResponse;
 import com.phillipe.NutriFit.dto.response.MealLogResponse;
 import com.phillipe.NutriFit.model.embedded.MealFoodEntry;
 import com.phillipe.NutriFit.model.entity.MealLog;
@@ -78,26 +79,16 @@ public class MealLogServiceImpl implements MealLogService {
     }
 
     private MealLogResponse toResponse(MealLog meal) {
-        MealLogResponse resp = new MealLogResponse();
-        resp.setId(meal.getId());
-        resp.setCreatedAt(meal.getCreatedAt());
-        resp.setTotalCalories(meal.getTotalCalories());
-        resp.setTotalProtein(meal.getTotalProtein());
-        resp.setTotalCarbs(meal.getTotalCarbs());
-        resp.setTotalFats(meal.getTotalFats());
-
-        // reuse FoodItemRequest as a simple response shape (fine for now)
-        List<FoodItemRequest> foods = meal.getFoods().stream().map(e -> {
-            FoodItemRequest f = new FoodItemRequest();
-            f.setType(e.getType());
-            f.setCalories(e.getCalories());
-            f.setProtein(e.getProtein());
-            f.setCarbs(e.getCarbs());
-            f.setFats(e.getFats());
-            return f;
-        }).toList();
-
-        resp.setFoods(foods);
-        return resp;
+        return MealLogResponse.builder()
+                .id(meal.getId())
+                .createdAt(meal.getCreatedAt())
+                .totalCalories(meal.getTotalCalories())
+                .totalProtein(meal.getTotalProtein())
+                .totalCarbs(meal.getTotalCarbs())
+                .totalFats(meal.getTotalFats())
+                .foods(meal.getFoods().stream()
+                        .map(FoodItemResponse::fromEmbedded)
+                        .toList())
+                .build();
     }
 }

@@ -1,0 +1,37 @@
+{
+  "family": "nutrifit-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::112129521897:role/nutrifit-ecs-task-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "112129521897.dkr.ecr.us-east-1.amazonaws.com/nutrifit-frontend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/nutrifit-frontend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:80/ || exit 1"],
+        "interval": 30,
+        "timeout": 3,
+        "retries": 3,
+        "startPeriod": 10
+      }
+    }
+  ]
+}

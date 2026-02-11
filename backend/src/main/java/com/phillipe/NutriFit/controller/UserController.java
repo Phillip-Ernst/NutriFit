@@ -1,12 +1,20 @@
 package com.phillipe.NutriFit.controller;
 
+import com.phillipe.NutriFit.dto.request.LoginRequest;
+import com.phillipe.NutriFit.dto.request.RegisterRequest;
+import com.phillipe.NutriFit.dto.response.LoginResponse;
+import com.phillipe.NutriFit.dto.response.UserResponse;
 import com.phillipe.NutriFit.model.entity.User;
 import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,21 +33,24 @@ public class UserController {
 
 
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
-        return userService.saveUser(user);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponse register(@Valid @RequestBody RegisterRequest request) {
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(request.getPassword());
+        return UserResponse.fromEntity(userService.saveUser(user));
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody User user) {
-
-
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(user.getUsername());
+            String token = jwtService.generateToken(authentication.getName());
+            return LoginResponse.builder().token(token).build();
         } else {
-            return "Invalid username or password.";
+            throw new BadCredentialsException("Invalid username or password.");
         }
     }
 }

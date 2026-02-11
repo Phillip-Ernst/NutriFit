@@ -17,9 +17,12 @@ RUN ./mvnw package -DskipTests -B
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Install wget for health checks and create non-root user
-RUN apk add --no-cache wget && \
-    addgroup -S spring && adduser -S spring -G spring
+# Install wget for health checks
+RUN apk add --no-cache wget
+
+# Create non-root user for security
+RUN addgroup -S spring && adduser -S spring -G spring
+
 USER spring:spring
 
 # Copy the built jar
