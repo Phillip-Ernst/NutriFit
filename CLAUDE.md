@@ -7,6 +7,7 @@ NutriFit is a nutrition + fitness tracking app.
 
 Primary goals:
 - Clean REST API design, secure auth (JWT), and reliable DB modeling
+- User profile and body measurement tracking
 - Simple, consistent React UI that matches API contracts
 
 ## Repo layout

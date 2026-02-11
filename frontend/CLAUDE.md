@@ -57,19 +57,34 @@ Rules:
 ---
 
 ### Architecture
-Stack: React 18, TypeScript, Vite, Tailwind CSS v4, React Router v6, TanStack Query, Axios.
+Stack: React 19, TypeScript, Vite, Tailwind CSS v4, React Router v7, TanStack Query, Axios.
 #### Source structure `(src/)`:
-* **api/** — Axios instance (`axios.ts` with JWT interceptor + 401 handler), endpoint modules (`auth.ts`, `meals.ts`, `workouts.ts`, `workoutPlans.ts`).
+* **api/** — Axios instance (`axios.ts` with JWT interceptor + 401 handler), endpoint modules (`auth.ts`, `meals.ts`, `workouts.ts`, `workoutPlans.ts`, `profile.ts`).
 * **components/ui/** — Reusable primitives: `Button`, `Input`, `Card`, `StatCard`, `MacroBar`, `LoadingSpinner`, `Modal`, `ErrorBoundary`.
 * **components/layout/** — `Navbar` (responsive with mobile hamburger) and `AppLayout` (navbar + `<Outlet />`).
 * **components/meals/** — Domain components: `MealForm`, `FoodItemRow`, `MealCard`, `MealTable`, `NutritionSummary`.
 * **components/workouts/** — Workout logging: `WorkoutForm`, `ExerciseItemRow`, `WorkoutCard`.
 * **components/workoutPlans/** — Workout plan management: `WorkoutPlanForm`, `WorkoutPlanCard`, `WorkoutPlanDayForm`, `PlanExerciseRow`, `ExecuteWorkoutForm`.
+* **components/profile/** — Profile and measurements: `ProfileForm`, `MeasurementForm`, `MeasurementCard`, `MeasurementHistory`.
 * **context/** — `AuthContext` manages JWT token + username in localStorage with `login`, `register`, `logout`, and token expiry validation.
-* **hooks/** — `useAuth`, `useMeals` (TanStack Query hooks), `useWorkouts`, `useWorkoutPlans`.
+* **hooks/** — `useAuth`, `useMeals` (TanStack Query hooks), `useWorkouts`, `useWorkoutPlans`, `useProfile`.
 * **pages/** — One file per route (see Routes table below).
 * **routes/** — `AppRouter` and `ProtectedRoute` (redirects to `/login` if unauthenticated).
 * **types/** — All TypeScript interfaces in `index.ts`.
+
+#### Profile & Measurement Types
+Types defined in `src/types/index.ts` for profile features:
+* `Gender` enum: `MALE`, `FEMALE`, `OTHER`, `PREFER_NOT_TO_SAY`
+* `UnitPreference` enum: `IMPERIAL`, `METRIC`
+* `ProfileResponse` — User profile with `birthYear`, `age`, `gender`, `unitPreference`
+* `ProfileUpdateRequest` — For updating profile fields (all optional)
+* `MeasurementRequest` — 13 optional body measurement fields (weight, bodyFat, chest, waist, etc.)
+* `MeasurementResponse` — Full measurement record with `id`, `measuredAt`, and all measurement fields
+
+**Unit Conversion Approach:**
+* All measurements stored in metric (kg, cm) on backend
+* Frontend converts display values based on `unitPreference` from profile
+* User enters values in their preferred unit; conversion happens before API calls
 
 #### Authentication
 * JWT stored in `localStorage` under keys `token` and `username`
@@ -122,6 +137,10 @@ Stack: React 18, TypeScript, Vite, Tailwind CSS v4, React Router v6, TanStack Qu
   * For display: use `val ?? 0`
 * TanStack Query key for meals: `['meals', 'mine']`
   * Mutations invalidate this key on success
+* TanStack Query keys for profile:
+  * `['profile']` — user profile data
+  * `['measurements']` — all measurements (newest first)
+  * `['measurements', 'latest']` — most recent measurement
 
 ---
 
@@ -216,12 +235,13 @@ it("submits login form", async () => {
   * one edge case test (empty state, validation error, etc.)
 * Keep tests fast and reliable
 
-> ✅ **Test coverage:** 16 test files covering:
+> ✅ **Test coverage:** 18 test files covering:
 > - Auth context and hooks (`AuthContext.test.ts`)
 > - Meal components and hooks (`MealForm.test.tsx`, `useMeals.test.tsx`)
 > - Workout components and hooks (`WorkoutForm.test.tsx`, `WorkoutCard.test.tsx`, `useWorkouts.test.tsx`)
 > - Workout plan components and hooks (`WorkoutPlanCard.test.tsx`, `useWorkoutPlans.test.tsx`)
-> - API modules (`auth.test.ts`, `meals.test.ts`, `workouts.test.ts`, `workoutPlans.test.ts`)
+> - Profile hooks (`useProfile.test.tsx`)
+> - API modules (`auth.test.ts`, `meals.test.ts`, `workouts.test.ts`, `workoutPlans.test.ts`, `profile.test.ts`)
 > - UI components (`ErrorBoundary.test.tsx`)
 > - Page components (`LoginPage.test.tsx`, `RegisterPage.test.tsx`)
 > - Routes (`ProtectedRoute.test.tsx`)

@@ -34,7 +34,9 @@ com/phillipe/NutriFit/
 │   ├── WorkoutLogController.java
 │   ├── WorkoutPlanController.java
 │   ├── ExerciseController.java
-│   └── HealthController.java
+│   ├── HealthController.java
+│   ├── ProfileController.java
+│   └── MeasurementController.java
 ├── service/                   # Business logic (interfaces + implementations)
 │   ├── JwtService.java
 │   ├── MyUserDetailsService.java
@@ -44,13 +46,19 @@ com/phillipe/NutriFit/
 │   ├── WorkoutLogService.java
 │   ├── WorkoutLogServiceImpl.java
 │   ├── WorkoutPlanService.java
-│   └── WorkoutPlanServiceImpl.java
+│   ├── WorkoutPlanServiceImpl.java
+│   ├── ProfileService.java
+│   ├── ProfileServiceImpl.java
+│   ├── MeasurementService.java
+│   └── MeasurementServiceImpl.java
 ├── repository/                # Spring Data repositories
 │   ├── UserRepository.java
 │   ├── MealLogRepository.java
 │   ├── WorkoutLogRepository.java
 │   ├── WorkoutPlanRepository.java
-│   └── WorkoutPlanDayRepository.java
+│   ├── WorkoutPlanDayRepository.java
+│   ├── UserProfileRepository.java
+│   └── BodyMeasurementRepository.java
 ├── model/                     # Domain models
 │   ├── ExerciseCategory.java        # Enum
 │   ├── Gender.java                  # Enum
@@ -77,7 +85,11 @@ com/phillipe/NutriFit/
 │   │   ├── WorkoutLogFromPlanRequest.java
 │   │   ├── WorkoutPlanRequest.java
 │   │   ├── WorkoutPlanDayRequest.java
-│   │   └── WorkoutPlanExerciseRequest.java
+│   │   ├── WorkoutPlanExerciseRequest.java
+│   │   ├── LoginRequest.java
+│   │   ├── RegisterRequest.java
+│   │   ├── ProfileUpdateRequest.java
+│   │   └── MeasurementRequest.java
 │   └── response/
 │       ├── ErrorResponse.java
 │       ├── FoodItemResponse.java
@@ -88,7 +100,10 @@ com/phillipe/NutriFit/
 │       ├── WorkoutLogResponse.java
 │       ├── WorkoutPlanDayResponse.java
 │       ├── WorkoutPlanExerciseResponse.java
-│       └── WorkoutPlanResponse.java
+│       ├── WorkoutPlanResponse.java
+│       ├── ExerciseItemResponse.java
+│       ├── ProfileResponse.java
+│       └── MeasurementResponse.java
 └── security/                  # Security-related classes
     └── UserPrincipal.java
 ```
@@ -397,6 +412,10 @@ Coverage Expectations
 > ✅ **Controller test coverage:** MockMvc tests exist for all controllers:
 > - `MealLogControllerTest`, `WorkoutLogControllerTest`, `WorkoutPlanControllerTest`
 > - `UserControllerTest`, `ExerciseControllerTest`, `HealthControllerTest`
+> - `ProfileControllerTest`, `MeasurementControllerTest`
+>
+> ✅ **Service test coverage:** Unit tests for service implementations:
+> - `ProfileServiceImplTest`, `MeasurementServiceImplTest`
 
 How to run tests
 ```
