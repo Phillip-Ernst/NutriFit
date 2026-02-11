@@ -4,11 +4,11 @@
 
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:postgres}
-    username: ${DB_USER:phillipernst}
-    password: ${DB_PASSWORD:NutriFit_post_5432}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
 
 # For local development, you can override JWT secret here
 # In production, this MUST be set via environment variable
 jwt:
-  secret: ${JWT_SECRET:local-dev-secret-key-minimum-32-characters-long}
+  secret: ${JWT_SECRET}
