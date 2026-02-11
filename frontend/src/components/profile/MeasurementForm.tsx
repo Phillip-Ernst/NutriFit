@@ -10,10 +10,8 @@ interface MeasurementFormProps {
   onCancel: () => void;
 }
 
-// Conversion helpers
-const cmToIn = (cm: number): number => cm / 2.54;
+// Conversion helpers (imperial → metric for API)
 const inToCm = (inches: number): number => inches * 2.54;
-const kgToLb = (kg: number): number => kg * 2.20462;
 const lbToKg = (lb: number): number => lb / 2.20462;
 
 function parseNum(val: string): number | null {
