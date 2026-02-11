@@ -22,11 +22,16 @@ import java.io.IOException;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
+    final
     JwtService jwtService;
 
-    @Autowired
+    final
     ApplicationContext context;
+
+    public JwtFilter(JwtService jwtService, ApplicationContext context) {
+        this.jwtService = jwtService;
+        this.context = context;
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -43,7 +48,12 @@ public class JwtFilter extends OncePerRequestFilter {
         String userName = null;
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            userName = jwtService.extractUserName(token);
+            try {
+                userName = jwtService.extractUserName(token);
+            } catch (Exception e) {
+                // Invalid token - ignore and continue without authentication
+                token = null;
+            }
         }
 
         if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
