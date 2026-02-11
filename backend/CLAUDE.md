@@ -148,15 +148,75 @@ java -jar target/NutriFit-0.0.1-SNAPSHOT.jar
 
 ## Environment & Configuration
 
-### PostgreSQL
-Requires PostgreSQL. DB connection is configured via environment variables (see `.env.example`):
-* `DB_HOST` (default: localhost)
-* `DB_PORT` (default: 5432)
-* `DB_NAME` (default: nutrifit)
-* `DB_USER` (default: nutrifit)
-* `DB_PASSWORD` (default: nutrifit)
+### Spring Profiles
 
-#### Local Development Setup
+The backend uses Spring profiles to manage environment-specific configuration. Each profile overrides the base `application.yaml` settings.
+
+| Profile | Config File | Purpose |
+|---------|-------------|---------|
+| (base) | `application.yaml` | Common settings (server, JPA, Flyway, JWT, CORS) |
+| `local` | `application-local.yaml` | Local development with local PostgreSQL |
+| `docker` | `application-docker.yaml` | Docker-compose environment |
+| `rds` | `application-rds.yaml` | AWS RDS / Production / Staging |
+| (test) | `src/test/resources/application.yaml` | Testcontainers (auto-managed) |
+
+#### Switching Profiles
+
+```bash
+# Method 1: Maven argument
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw spring-boot:run -Dspring-boot.run.profiles=docker
+./mvnw spring-boot:run -Dspring-boot.run.profiles=rds
+
+# Method 2: Environment variable
+SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
+export SPRING_PROFILES_ACTIVE=rds && ./mvnw spring-boot:run
+
+# Method 3: JAR with profile
+java -jar target/NutriFit-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
+java -jar target/NutriFit-0.0.1-SNAPSHOT.jar --spring.profiles.active=rds
+
+# Method 4: Docker (set in docker-compose.yml or Dockerfile)
+ENV SPRING_PROFILES_ACTIVE=docker
+```
+
+### Environment Variables by Profile
+
+#### All Profiles (Required)
+| Variable | Description |
+|----------|-------------|
+| `JWT_SECRET` | JWT signing key (min 32 chars for HS256) |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated allowed origins (e.g., `http://localhost:5173,https://app.example.com`) |
+
+#### Profile: `local`
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_HOST` | PostgreSQL host | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_NAME` | Database name | `nutrifit` |
+| `DB_USER` | Database user | `nutrifit` |
+| `DB_PASSWORD` | Database password | `nutrifit` |
+
+#### Profile: `docker`
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_HOST_DOCK` | PostgreSQL host (Docker network) | `db` |
+| `DB_PORT_DOCK` | PostgreSQL port | `5432` |
+| `DB_NAME_DOCK` | Database name | `nutrifit` |
+| `DB_USER_DOCK` | Database user | `nutrifit` |
+| `DB_PASSWORD_DOCK` | Database password | `nutrifit` |
+
+#### Profile: `rds`
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_HOST_RDS` | RDS endpoint | `nutrifit.xxxxx.us-east-1.rds.amazonaws.com` |
+| `DB_PORT_RDS` | RDS port | `5432` |
+| `DB_NAME_RDS` | Database name | `nutrifit` |
+| `DB_USER_RDS` | Database user | `admin` |
+| `DB_PASSWORD_RDS` | Database password | (from AWS Secrets Manager) |
+
+### Local Development Setup
+
 ```bash
 # Start PostgreSQL via Docker
 ./scripts/db-setup.sh start
@@ -164,7 +224,7 @@ Requires PostgreSQL. DB connection is configured via environment variables (see 
 # Run Flyway migrations
 ./scripts/db-setup.sh migrate
 
-# Start the app
+# Start the app with local profile
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 
 # Other commands
@@ -521,10 +581,6 @@ return mealLogRepository.findByUser(user);
 ```
 
 ---
-
-## Remaining Tech Debt
-
-### Low Priority
 
 #### Hardcoded ROLE_USER
 **File:** `security/UserPrincipal.java`
