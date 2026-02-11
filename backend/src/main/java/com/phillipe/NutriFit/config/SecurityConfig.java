@@ -27,9 +27,6 @@ import java.util.List;
 public class SecurityConfig {
 
     @Autowired
-    private UserDetailsService userDetailsService;
-
-    @Autowired
     private JwtFilter jwtFilter;
 
     @Bean
@@ -66,7 +63,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "https://nutritionxfitness.com", "https://www.nutritionxfitness.com"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
