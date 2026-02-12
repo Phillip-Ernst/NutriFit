@@ -4,6 +4,7 @@ import type {
   ProfileUpdateRequest,
   MeasurementRequest,
   MeasurementResponse,
+  UserChangeHistoryResponse,
 } from '../types';
 
 // Profile endpoints
@@ -39,4 +40,10 @@ export const getLatestMeasurement = async (): Promise<MeasurementResponse | null
 
 export const deleteMeasurement = async (id: number): Promise<void> => {
   await api.delete(`/measurements/${id}`);
+};
+
+// Change history endpoint
+export const getChangeHistory = async (): Promise<UserChangeHistoryResponse[]> => {
+  const response = await api.get<UserChangeHistoryResponse[]>('/profile/history');
+  return response.data;
 };

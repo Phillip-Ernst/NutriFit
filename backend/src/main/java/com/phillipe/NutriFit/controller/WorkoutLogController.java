@@ -7,6 +7,7 @@ import com.phillipe.NutriFit.dto.request.WorkoutLogFromPlanRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,5 +39,12 @@ public class WorkoutLogController {
     public List<WorkoutLogResponse> myWorkouts(Authentication authentication) {
         String username = authentication.getName();
         return workoutLogService.getMyWorkouts(username);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteWorkout(@PathVariable Long id, Authentication authentication) {
+        String username = authentication.getName();
+        workoutLogService.deleteWorkout(id, username);
+        return ResponseEntity.noContent().build();
     }
 }

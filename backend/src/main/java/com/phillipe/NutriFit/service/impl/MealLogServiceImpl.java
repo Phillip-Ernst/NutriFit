@@ -78,6 +78,18 @@ public class MealLogServiceImpl implements MealLogService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public void deleteMeal(Long id, String username) {
+        User user = userRepo.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("Username " + username + " not found");
+        }
+        MealLog meal = mealLogRepo.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Meal not found or access denied"));
+        mealLogRepo.delete(meal);
+    }
+
     private MealLogResponse toResponse(MealLog meal) {
         return MealLogResponse.builder()
                 .id(meal.getId())

@@ -10,3 +10,7 @@ export const getMyMeals = async (): Promise<MealLogResponse[]> => {
   const response = await api.get<MealLogResponse[]>('/meals/mine');
   return response.data;
 };
+
+export const deleteMeal = async (id: number): Promise<void> => {
+  await api.delete(`/meals/${id}`);
+};

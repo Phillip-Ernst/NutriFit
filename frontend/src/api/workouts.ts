@@ -10,3 +10,7 @@ export const getMyWorkouts = async (): Promise<WorkoutLogResponse[]> => {
   const response = await api.get<WorkoutLogResponse[]>('/workouts/mine');
   return response.data;
 };
+
+export const deleteWorkout = async (id: number): Promise<void> => {
+  await api.delete(`/workouts/${id}`);
+};

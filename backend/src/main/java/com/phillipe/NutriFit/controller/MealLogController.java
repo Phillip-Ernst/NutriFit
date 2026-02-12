@@ -5,6 +5,7 @@ import com.phillipe.NutriFit.dto.response.MealLogResponse;
 import com.phillipe.NutriFit.service.MealLogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,5 +33,13 @@ public class MealLogController {
 
         String username = authentication.getName();
         return mealLogService.getMyMeals(username);
+    }
+
+    // Delete a meal by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMeal(@PathVariable Long id, Authentication authentication) {
+        String username = authentication.getName();
+        mealLogService.deleteMeal(id, username);
+        return ResponseEntity.noContent().build();
     }
 }

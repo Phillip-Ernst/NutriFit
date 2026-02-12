@@ -8,12 +8,13 @@ import {
   useLatestMeasurement,
   useCreateMeasurement,
   useDeleteMeasurement,
+  useChangeHistory,
 } from '../hooks/useProfile';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { ProfileForm, MeasurementForm, MeasurementHistory } from '../components/profile';
+import { ProfileForm, MeasurementForm, MeasurementHistory, ChangeHistorySection } from '../components/profile';
 import type { ProfileUpdateRequest, MeasurementRequest, UnitPreference } from '../types';
 
 // Conversion helpers for display
@@ -64,6 +65,7 @@ export default function ProfilePage() {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: measurements, isLoading: measurementsLoading } = useMeasurements();
   const { data: latestMeasurement } = useLatestMeasurement();
+  const { data: changeHistory, isLoading: historyLoading } = useChangeHistory();
 
   const updateProfile = useUpdateProfile();
   const createMeasurement = useCreateMeasurement();
@@ -212,6 +214,18 @@ export default function ProfilePage() {
             onDelete={handleDeleteMeasurement}
             deletingId={deletingId}
           />
+        )}
+      </div>
+
+      {/* Change History Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-white">Change History</h2>
+        {historyLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <ChangeHistorySection changes={changeHistory ?? []} />
         )}
       </div>
 

@@ -4,9 +4,11 @@ import MealCard from './MealCard';
 
 interface MealTableProps {
   meals: MealLogResponse[];
+  onDelete?: (id: number) => void;
+  deletingId?: number | null;
 }
 
-export default function MealTable({ meals }: MealTableProps) {
+export default function MealTable({ meals, onDelete, deletingId }: MealTableProps) {
   if (meals.length === 0) {
     return (
       <div className="text-center py-12">
@@ -24,7 +26,12 @@ export default function MealTable({ meals }: MealTableProps) {
   return (
     <div className="space-y-4">
       {meals.map((meal) => (
-        <MealCard key={meal.id} meal={meal} />
+        <MealCard
+          key={meal.id}
+          meal={meal}
+          onDelete={onDelete ? () => onDelete(meal.id) : undefined}
+          isDeleting={deletingId === meal.id}
+        />
       ))}
     </div>
   );

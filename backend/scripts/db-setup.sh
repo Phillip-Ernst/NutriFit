@@ -18,9 +18,9 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 # Default database settings (matching docker-compose.yml)
 export DB_HOST="${DB_HOST:-localhost}"
 export DB_PORT="${DB_PORT:-5432}"
-export DB_NAME="${DB_NAME:-nutrifit}"
-export DB_USER="${DB_USER:-nutrifit}"
-export DB_PASSWORD="${DB_PASSWORD:-nutrifit}"
+export DB_NAME="${DB_NAME:-postgres}"
+export DB_USER="${DB_USER:-phillipernst}"
+export DB_PASSWORD="${DB_PASSWORD:-NutriFit_post_5432}"
 export DB_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
 cd "$PROJECT_DIR"
@@ -53,7 +53,7 @@ case "${1:-help}" in
 
     migrate)
         echo "Running Flyway migrations..."
-        ./mvnw flyway:migrate -Dflyway.url="$DB_URL" -Dflyway.user="$DB_USER" -Dflyway.password="$DB_PASSWORD"
+        ./mvnw flyway:migrate -Dflyway.url="$DB_URL" -Dflyway.user="$DB_USER" -Dflyway.password="$DB_PASSWORD" -Dflyway.baselineOnMigrate=true -Dflyway.baselineVersion=2
         ;;
 
     info)

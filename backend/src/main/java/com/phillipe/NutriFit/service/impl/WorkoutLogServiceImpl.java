@@ -136,6 +136,18 @@ public class WorkoutLogServiceImpl implements WorkoutLogService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public void deleteWorkout(Long id, String username) {
+        User user = userRepo.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("Username " + username + " not found");
+        }
+        WorkoutLog workout = workoutLogRepo.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Workout not found or access denied"));
+        workoutLogRepo.delete(workout);
+    }
+
     private WorkoutLogResponse toResponse(WorkoutLog workout) {
         WorkoutLogResponse resp = new WorkoutLogResponse();
         resp.setId(workout.getId());

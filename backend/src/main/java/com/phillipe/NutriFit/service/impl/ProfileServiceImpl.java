@@ -6,6 +6,7 @@ import com.phillipe.NutriFit.model.entity.User;
 import com.phillipe.NutriFit.model.entity.UserProfile;
 import com.phillipe.NutriFit.repository.UserProfileRepository;
 import com.phillipe.NutriFit.repository.UserRepository;
+import com.phillipe.NutriFit.service.ChangeHistoryService;
 import com.phillipe.NutriFit.service.ProfileService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -16,10 +17,13 @@ public class ProfileServiceImpl implements ProfileService {
 
     private final UserProfileRepository profileRepo;
     private final UserRepository userRepo;
+    private final ChangeHistoryService changeHistoryService;
 
-    public ProfileServiceImpl(UserProfileRepository profileRepo, UserRepository userRepo) {
+    public ProfileServiceImpl(UserProfileRepository profileRepo, UserRepository userRepo,
+                              ChangeHistoryService changeHistoryService) {
         this.profileRepo = profileRepo;
         this.userRepo = userRepo;
+        this.changeHistoryService = changeHistoryService;
     }
 
     @Override
@@ -38,13 +42,20 @@ public class ProfileServiceImpl implements ProfileService {
         UserProfile profile = profileRepo.findByUserId(user.getId())
                 .orElseGet(() -> createDefaultProfile(user));
 
+        // Record changes before updating
         if (request.getBirthYear() != null) {
+            changeHistoryService.recordChange(user, "PROFILE", null, "birthYear",
+                    profile.getBirthYear(), request.getBirthYear());
             profile.setBirthYear(request.getBirthYear());
         }
         if (request.getGender() != null) {
+            changeHistoryService.recordChange(user, "PROFILE", null, "gender",
+                    profile.getGender(), request.getGender());
             profile.setGender(request.getGender());
         }
         if (request.getUnitPreference() != null) {
+            changeHistoryService.recordChange(user, "PROFILE", null, "unitPreference",
+                    profile.getUnitPreference(), request.getUnitPreference());
             profile.setUnitPreference(request.getUnitPreference());
         }
 

@@ -18,7 +18,13 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function MealCard({ meal }: { meal: MealLogResponse }) {
+interface MealCardProps {
+  meal: MealLogResponse;
+  onDelete?: () => void;
+  isDeleting?: boolean;
+}
+
+export default function MealCard({ meal, onDelete, isDeleting = false }: MealCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -30,10 +36,24 @@ export default function MealCard({ meal }: { meal: MealLogResponse }) {
             {meal.totalCalories} <span className="text-sm font-normal text-gray-400">kcal</span>
           </p>
         </div>
-        <div className="flex gap-3 text-sm text-gray-300">
-          <span className="text-blue-400">{meal.totalProtein}g P</span>
-          <span className="text-yellow-400">{meal.totalCarbs}g C</span>
-          <span className="text-pink-400">{meal.totalFats}g F</span>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-3 text-sm text-gray-300">
+            <span className="text-blue-400">{meal.totalProtein}g P</span>
+            <span className="text-yellow-400">{meal.totalCarbs}g C</span>
+            <span className="text-pink-400">{meal.totalFats}g F</span>
+          </div>
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="text-gray-500 hover:text-red-400 transition-colors disabled:opacity-50"
+              aria-label="Delete meal"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

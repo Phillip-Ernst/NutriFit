@@ -8,4 +8,5 @@ import java.util.List;
 public interface MealLogService {
     MealLogResponse createMeal(MealLogRequest request, String username);
     List<MealLogResponse> getMyMeals(String username);
+    void deleteMeal(Long id, String username);
 }
