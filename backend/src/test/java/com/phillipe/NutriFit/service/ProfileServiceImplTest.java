@@ -31,6 +31,9 @@ class ProfileServiceImplTest {
     @Mock
     private UserRepository userRepo;
 
+    @Mock
+    private ChangeHistoryService changeHistoryService;
+
     @InjectMocks
     private ProfileServiceImpl service;
 

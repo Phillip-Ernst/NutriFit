@@ -4,9 +4,11 @@ import WorkoutCard from './WorkoutCard';
 
 interface WorkoutTableProps {
   workouts: WorkoutLogResponse[];
+  onDelete?: (id: number) => void;
+  deletingId?: number | null;
 }
 
-export default function WorkoutTable({ workouts }: WorkoutTableProps) {
+export default function WorkoutTable({ workouts, onDelete, deletingId }: WorkoutTableProps) {
   if (workouts.length === 0) {
     return (
       <div className="text-center py-12">
@@ -24,7 +26,12 @@ export default function WorkoutTable({ workouts }: WorkoutTableProps) {
   return (
     <div className="space-y-4">
       {workouts.map((workout) => (
-        <WorkoutCard key={workout.id} workout={workout} />
+        <WorkoutCard
+          key={workout.id}
+          workout={workout}
+          onDelete={onDelete ? () => onDelete(workout.id) : undefined}
+          isDeleting={deletingId === workout.id}
+        />
       ))}
     </div>
   );

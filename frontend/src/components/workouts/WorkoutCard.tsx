@@ -15,7 +15,13 @@ function isCardioExercise(category: string | null): boolean {
   return category?.toUpperCase() === 'CARDIO';
 }
 
-export default function WorkoutCard({ workout }: { workout: WorkoutLogResponse }) {
+interface WorkoutCardProps {
+  workout: WorkoutLogResponse;
+  onDelete?: () => void;
+  isDeleting?: boolean;
+}
+
+export default function WorkoutCard({ workout, onDelete, isDeleting = false }: WorkoutCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const hasCardio = workout.exercises.some((ex) => isCardioExercise(ex.category));
@@ -29,15 +35,29 @@ export default function WorkoutCard({ workout }: { workout: WorkoutLogResponse }
             {workout.workoutPlanDayName || 'Workout'}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-sm text-gray-300">
-          {hasCardio && workout.totalCaloriesBurned > 0 && (
-            <span className="text-orange-400">{workout.totalCaloriesBurned} cal</span>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-wrap gap-3 text-sm text-gray-300">
+            {hasCardio && workout.totalCaloriesBurned > 0 && (
+              <span className="text-orange-400">{workout.totalCaloriesBurned} cal</span>
+            )}
+            {hasCardio && workout.totalDurationMinutes > 0 && (
+              <span className="text-blue-400">{workout.totalDurationMinutes} min</span>
+            )}
+            <span className="text-purple-400">{workout.totalSets} sets</span>
+            <span className="text-pink-400">{workout.totalReps} reps</span>
+          </div>
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="text-gray-500 hover:text-red-400 transition-colors disabled:opacity-50"
+              aria-label="Delete workout"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           )}
-          {hasCardio && workout.totalDurationMinutes > 0 && (
-            <span className="text-blue-400">{workout.totalDurationMinutes} min</span>
-          )}
-          <span className="text-purple-400">{workout.totalSets} sets</span>
-          <span className="text-pink-400">{workout.totalReps} reps</span>
         </div>
       </div>
 

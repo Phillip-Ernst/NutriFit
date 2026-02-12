@@ -33,6 +33,9 @@ class MeasurementServiceImplTest {
     @Mock
     private UserRepository userRepo;
 
+    @Mock
+    private ChangeHistoryService changeHistoryService;
+
     @InjectMocks
     private MeasurementServiceImpl service;
 

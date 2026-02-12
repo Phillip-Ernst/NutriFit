@@ -1,10 +1,26 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMyMeals } from '../hooks/useMeals';
+import { useMyMeals, useDeleteMeal } from '../hooks/useMeals';
 import MealTable from '../components/meals/MealTable';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 export default function MealHistoryPage() {
   const { data: meals, isLoading } = useMyMeals();
+  const deleteMeal = useDeleteMeal();
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+  const handleDeleteClick = (id: number) => {
+    setDeleteConfirm(id);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirm !== null) {
+      deleteMeal.mutate(deleteConfirm, {
+        onSuccess: () => setDeleteConfirm(null),
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -27,7 +43,24 @@ export default function MealHistoryPage() {
         </Link>
       </div>
 
-      {isLoading ? <LoadingSpinner /> : <MealTable meals={meals || []} />}
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        <MealTable
+          meals={meals || []}
+          onDelete={handleDeleteClick}
+          deletingId={deleteMeal.isPending ? deleteConfirm : null}
+        />
+      )}
+
+      <ConfirmModal
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Meal"
+        message="Are you sure you want to delete this meal? This action cannot be undone."
+        isLoading={deleteMeal.isPending}
+      />
     </div>
   );
 }

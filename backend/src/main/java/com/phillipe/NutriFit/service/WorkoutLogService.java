@@ -10,4 +10,5 @@ public interface WorkoutLogService {
     WorkoutLogResponse createWorkout(WorkoutLogRequest request, String username);
     WorkoutLogResponse createWorkoutFromPlan(WorkoutLogFromPlanRequest request, String username);
     List<WorkoutLogResponse> getMyWorkouts(String username);
+    void deleteWorkout(Long id, String username);
 }

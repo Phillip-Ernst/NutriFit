@@ -186,3 +186,15 @@ export interface MeasurementResponse {
   calvesCm: number | null;
   notes: string | null;
 }
+
+// === Change History ===
+
+export interface UserChangeHistoryResponse {
+  id: number;
+  entityType: 'PROFILE' | 'MEASUREMENT';
+  entityId: number | null;
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedAt: string;
+}

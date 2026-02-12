@@ -6,6 +6,7 @@ import {
   getMeasurements,
   getLatestMeasurement,
   deleteMeasurement,
+  getChangeHistory,
 } from '../api/profile';
 import type { ProfileUpdateRequest, MeasurementRequest } from '../types';
 
@@ -23,6 +24,7 @@ export function useUpdateProfile() {
     mutationFn: (data: ProfileUpdateRequest) => updateProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'history'] });
     },
   });
 }
@@ -48,6 +50,7 @@ export function useCreateMeasurement() {
     mutationFn: (data: MeasurementRequest) => createMeasurement(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['measurements'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'history'] });
     },
   });
 }
@@ -58,6 +61,15 @@ export function useDeleteMeasurement() {
     mutationFn: (id: number) => deleteMeasurement(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['measurements'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'history'] });
     },
+  });
+}
+
+// Change history hook
+export function useChangeHistory() {
+  return useQuery({
+    queryKey: ['profile', 'history'],
+    queryFn: getChangeHistory,
   });
 }

@@ -8,9 +8,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface WorkoutLogRepository extends JpaRepository<WorkoutLog, Long> {
     List<WorkoutLog> findByUserIdOrderByCreatedAtDesc(Long userId);
+    Optional<WorkoutLog> findByIdAndUserId(Long id, Long userId);
 
     @Modifying
     @Query("UPDATE WorkoutLog wl SET wl.workoutPlanDay = null WHERE wl.workoutPlanDay.id IN :dayIds")
