@@ -144,10 +144,50 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy Backend to ECS
-        run: |
-          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-backend --force-new-deployment
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Deploy Frontend to ECS
+      # Backend deployment
+      - name: Download backend task definition
         run: |
-          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-frontend --force-new-deployment
+          aws ecs describe-task-definition --task-definition nutrifit-backend \
+            --query taskDefinition > backend-task-definition.json
+
+      - name: Update backend image in task definition
+        id: backend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: backend-task-definition.json
+          container-name: nutrifit-backend
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}
+
+      - name: Deploy backend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.backend-task-def.outputs.task-definition }}
+          service: nutrifit-backend
+          cluster: NutriFit-Cluster
+          wait-for-service-stability: true
+
+      # Frontend deployment
+      - name: Download frontend task definition
+        run: |
+          aws ecs describe-task-definition --task-definition nutrifit-frontend \
+            --query taskDefinition > frontend-task-definition.json
+
+      - name: Update frontend image in task definition
+        id: frontend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: frontend-task-definition.json
+          container-name: nutrifit-frontend
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_FRONTEND }}:${{ github.sha }}
+
+      - name: Deploy frontend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.frontend-task-def.outputs.task-definition }}
+          service: nutrifit-frontend
+          cluster: NutriFit-Cluster
+          wait-for-service-stability: true
