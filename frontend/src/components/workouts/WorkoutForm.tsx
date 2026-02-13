@@ -6,6 +6,7 @@ import ExerciseItemRow from './ExerciseItemRow';
 import Button from '../ui/Button';
 
 const emptyExercise = (): ExerciseItem => ({
+  id: crypto.randomUUID(),
   name: '',
   category: null,
   durationMinutes: null,
@@ -72,7 +73,7 @@ export default function WorkoutForm() {
       <div className="space-y-3">
         {exercises.map((exercise, i) => (
           <ExerciseItemRow
-            key={i}
+            key={exercise.id}
             index={i}
             exercise={exercise}
             onChange={handleChange}

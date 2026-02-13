@@ -22,6 +22,8 @@ import java.io.IOException;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
+
     final
     JwtService jwtService;
 
@@ -50,8 +52,19 @@ public class JwtFilter extends OncePerRequestFilter {
             token = authHeader.substring(7);
             try {
                 userName = jwtService.extractUserName(token);
+            } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                log.debug("JWT token expired for request to {}", request.getRequestURI());
+                token = null;
+            } catch (io.jsonwebtoken.MalformedJwtException e) {
+                log.warn("Malformed JWT token received for request to {} (token length: {})",
+                        request.getRequestURI(), token != null ? token.length() : 0);
+                token = null;
+            } catch (io.jsonwebtoken.security.SignatureException e) {
+                log.warn("Invalid JWT signature for request to {}", request.getRequestURI());
+                token = null;
             } catch (Exception e) {
-                // Invalid token - ignore and continue without authentication
+                log.warn("JWT validation failed for request to {}: {}",
+                        request.getRequestURI(), e.getClass().getSimpleName());
                 token = null;
             }
         }

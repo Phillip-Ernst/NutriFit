@@ -6,6 +6,7 @@ import FoodItemRow from './FoodItemRow';
 import Button from '../ui/Button';
 
 const emptyFood = (): FoodItem => ({
+  id: crypto.randomUUID(),
   type: '',
   calories: null,
   protein: null,
@@ -67,7 +68,7 @@ export default function MealForm() {
       <div className="space-y-3">
         {foods.map((food, i) => (
           <FoodItemRow
-            key={i}
+            key={food.id}
             index={i}
             food={food}
             onChange={handleChange}

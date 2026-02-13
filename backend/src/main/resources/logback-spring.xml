@@ -7,11 +7,11 @@
 
     <!-- Console pattern for local development (human-readable) -->
     <property name="CONSOLE_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] [%X{requestId:-}] %cyan(%logger{36}) - %msg%n"/>
 
     <!-- JSON pattern for production (structured logging) -->
     <property name="JSON_PATTERN"
-              value='{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","logger":"%logger","thread":"%thread","message":"%msg","app":"${appName}"}%n'/>
+              value='{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","logger":"%logger","thread":"%thread","requestId":"%X{requestId:-}","message":"%msg","app":"${appName}"}%n'/>
 
     <!-- Console Appender (human-readable) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

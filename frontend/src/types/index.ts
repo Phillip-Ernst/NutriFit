@@ -22,6 +22,7 @@ export interface User {
 // === Meals ===
 
 export interface FoodItem {
+  id?: string;
   type: string;
   calories: number | null;
   protein: number | null;
@@ -46,6 +47,7 @@ export interface MealLogResponse {
 // === Workouts ===
 
 export interface ExerciseItem {
+  id?: string;
   name: string;
   category: string | null;
   durationMinutes: number | null;
@@ -94,6 +96,7 @@ export interface PredefinedExercise {
 }
 
 export interface WorkoutPlanExercise {
+  id?: string;
   name: string;
   category: ExerciseCategory | null;
   isCustom: boolean;
@@ -104,6 +107,7 @@ export interface WorkoutPlanExercise {
 
 export interface WorkoutPlanDay {
   id?: number;
+  clientId?: string;
   dayNumber: number;
   dayName: string;
   exercises: WorkoutPlanExercise[];

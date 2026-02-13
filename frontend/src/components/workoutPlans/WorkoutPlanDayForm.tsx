@@ -70,7 +70,7 @@ export default function WorkoutPlanDayForm({
         ) : (
           day.exercises.map((exercise, i) => (
             <PlanExerciseRow
-              key={i}
+              key={exercise.id ?? `${day.clientId ?? day.id ?? day.dayNumber}-exercise-${i}`}
               index={i}
               exercise={exercise}
               onChange={handleExerciseChange}

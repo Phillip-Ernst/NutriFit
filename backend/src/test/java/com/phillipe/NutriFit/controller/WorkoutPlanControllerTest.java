@@ -8,6 +8,7 @@ import com.phillipe.NutriFit.dto.response.WorkoutPlanDayResponse;
 import com.phillipe.NutriFit.dto.response.WorkoutPlanExerciseResponse;
 import com.phillipe.NutriFit.dto.response.WorkoutPlanResponse;
 import com.phillipe.NutriFit.model.ExerciseCategory;
+import com.phillipe.NutriFit.config.RateLimitConfig;
 import com.phillipe.NutriFit.config.SecurityConfig;
 import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.MyUserDetailsService;
@@ -55,6 +56,9 @@ class WorkoutPlanControllerTest {
 
     @MockitoBean
     private MyUserDetailsService myUserDetailsService;
+
+    @MockitoBean
+    private RateLimitConfig rateLimitConfig;
 
     // ==================== CREATE PLAN TESTS ====================
 
