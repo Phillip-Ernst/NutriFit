@@ -55,7 +55,7 @@ Primary goals:
 - [ ] **Modal focus not trapped** — Modal component doesn't implement keyboard focus trap
 - [ ] **Array index as React key** — Several components use index as key (MealForm, WorkoutForm, MealCard, etc.)
 - [ ] **No axios interceptor tests** — Critical auth flow in `axios.ts` lacks test coverage
-- [ ] **Silent 401 redirect** — Auth failure redirects without user notification (no toast/message)
+- [ ] **Silent 401 redirect on protected routes** — 401 from protected routes redirects without notification (auth pages now show API error messages)
 
 ---
 
@@ -67,9 +67,10 @@ Primary goals:
 - Document key rotation strategy for production
 
 ### CORS Configuration
-- CORS origins **must** be explicitly whitelisted
+- CORS origins **must** be explicitly whitelisted via `CORS_ALLOWED_ORIGINS` env var
 - Never reflect arbitrary `Origin` headers back to the client
-- Use Spring's `@CrossOrigin` with explicit `origins` or configure in `WebMvcConfigurer`
+- CORS is configured in `SecurityConfig.java` using Spring Security's `CorsConfigurationSource`
+- Supports comma-separated origins (e.g., `http://localhost:5173,https://example.com`)
 
 ### Secrets Management
 - Never commit `.env` files (use `.env.example` templates)

@@ -141,6 +141,7 @@ Types defined in `src/types/index.ts` for profile features:
   * `['profile']` — user profile data
   * `['measurements']` — all measurements (newest first)
   * `['measurements', 'latest']` — most recent measurement
+* Password validation: minimum 8 characters (frontend and backend aligned)
 
 ---
 
@@ -341,17 +342,20 @@ On initialization, expired tokens are cleared from localStorage automatically.
 ```
 
 ### User Feedback on Auth Errors
-Currently, 401 redirects happen silently. Consider adding user notification:
+> ✅ **Implemented** — Login and Register pages display API error messages.
 
+Auth pages extract error messages from API responses:
 ```tsx
-// In axios response interceptor
-if (error.response?.status === 401) {
-  localStorage.removeItem('token');
-  localStorage.removeItem('username');
-  // TODO: Show toast notification before redirect
-  window.location.href = '/login';
-}
+const axiosError = err as { response?: { data?: { message?: string } } };
+const apiMessage = axiosError.response?.data?.message;
+setError(apiMessage || 'Fallback error message');
 ```
+
+Examples:
+- 409 on register: "Username 'phil' is already taken"
+- 401 on login: "Invalid username or password"
+
+**Note:** 401 redirects from protected routes still happen silently.
 
 ---
 
