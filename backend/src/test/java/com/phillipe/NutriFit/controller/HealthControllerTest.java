@@ -1,5 +1,6 @@
 package com.phillipe.NutriFit.controller;
 
+import com.phillipe.NutriFit.config.RateLimitConfig;
 import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,9 @@ class HealthControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private RateLimitConfig rateLimitConfig;
 
     @Test
     @WithMockUser

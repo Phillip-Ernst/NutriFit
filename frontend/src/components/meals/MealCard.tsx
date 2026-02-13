@@ -73,7 +73,7 @@ export default function MealCard({ meal, onDelete, isDeleting = false }: MealCar
       {expanded && (
         <div className="border-t border-gray-800 pt-3 space-y-2">
           {meal.foods.map((food, i) => (
-            <div key={i} className="flex items-center justify-between text-sm">
+            <div key={food.id ?? `${meal.id}-food-${i}`} className="flex items-center justify-between text-sm">
               <span className="text-gray-200">{food.type}</span>
               <span className="text-gray-400">
                 {safe(food.calories)} cal | {safe(food.protein)}p | {safe(food.carbs)}c | {safe(food.fats)}f

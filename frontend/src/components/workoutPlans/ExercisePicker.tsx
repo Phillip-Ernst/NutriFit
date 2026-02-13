@@ -35,6 +35,7 @@ export default function ExercisePicker({ isOpen, onClose, onSelect }: ExercisePi
 
   const handleSelectPredefined = (exercise: PredefinedExercise) => {
     onSelect({
+      id: crypto.randomUUID(),
       name: exercise.name,
       category: exercise.category,
       isCustom: false,
@@ -48,6 +49,7 @@ export default function ExercisePicker({ isOpen, onClose, onSelect }: ExercisePi
   const handleAddCustom = () => {
     if (!searchQuery.trim()) return;
     onSelect({
+      id: crypto.randomUUID(),
       name: searchQuery.trim(),
       category: selectedCategory ?? null,
       isCustom: true,

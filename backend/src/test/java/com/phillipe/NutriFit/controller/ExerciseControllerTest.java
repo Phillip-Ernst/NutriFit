@@ -2,6 +2,7 @@ package com.phillipe.NutriFit.controller;
 
 import com.phillipe.NutriFit.dto.response.PredefinedExerciseResponse;
 import com.phillipe.NutriFit.model.ExerciseCategory;
+import com.phillipe.NutriFit.config.RateLimitConfig;
 import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.UserService;
 import com.phillipe.NutriFit.service.WorkoutPlanService;
@@ -33,6 +34,9 @@ class ExerciseControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private RateLimitConfig rateLimitConfig;
 
     @Test
     @WithMockUser

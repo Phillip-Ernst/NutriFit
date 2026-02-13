@@ -10,6 +10,7 @@ interface WorkoutPlanFormProps {
 }
 
 const emptyDay = (dayNumber: number): WorkoutPlanDay => ({
+  clientId: crypto.randomUUID(),
   dayNumber,
   dayName: '',
   exercises: [],
@@ -19,7 +20,14 @@ export default function WorkoutPlanForm({ initialPlan }: WorkoutPlanFormProps) {
   const [name, setName] = useState(initialPlan?.name ?? '');
   const [description, setDescription] = useState(initialPlan?.description ?? '');
   const [days, setDays] = useState<WorkoutPlanDay[]>(
-    initialPlan?.days ?? [emptyDay(1)]
+    initialPlan?.days.map((day) => ({
+      ...day,
+      clientId: day.clientId ?? crypto.randomUUID(),
+      exercises: day.exercises.map((ex) => ({
+        ...ex,
+        id: ex.id ?? crypto.randomUUID(),
+      })),
+    })) ?? [emptyDay(1)]
   );
   const [error, setError] = useState('');
 
@@ -126,7 +134,7 @@ export default function WorkoutPlanForm({ initialPlan }: WorkoutPlanFormProps) {
         <h3 className="text-lg font-semibold text-white">Workout Days</h3>
         {days.map((day, index) => (
           <WorkoutPlanDayForm
-            key={index}
+            key={day.clientId ?? day.id ?? `day-${index}`}
             day={day}
             onUpdate={(updated) => handleUpdateDay(index, updated)}
             onRemove={() => handleRemoveDay(index)}

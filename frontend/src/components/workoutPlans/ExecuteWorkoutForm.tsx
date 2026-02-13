@@ -11,6 +11,7 @@ interface ExecuteWorkoutFormProps {
 export default function ExecuteWorkoutForm({ planDay }: ExecuteWorkoutFormProps) {
   const [exercises, setExercises] = useState<ExerciseItem[]>(
     planDay.exercises.map((ex) => ({
+      id: ex.id ?? crypto.randomUUID(),
       name: ex.name,
       category: ex.category,
       sets: ex.targetSets,
@@ -75,7 +76,7 @@ export default function ExecuteWorkoutForm({ planDay }: ExecuteWorkoutFormProps)
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-3">
         {exercises.map((exercise, i) => (
-          <div key={i} className="p-4 bg-gray-800 rounded-lg space-y-3">
+          <div key={exercise.id} className="p-4 bg-gray-800 rounded-lg space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-white font-medium">{exercise.name}</span>
               {exercise.category && (

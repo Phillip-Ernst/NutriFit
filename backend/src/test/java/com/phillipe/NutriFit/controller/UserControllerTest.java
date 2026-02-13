@@ -5,6 +5,7 @@ import com.phillipe.NutriFit.dto.request.LoginRequest;
 import com.phillipe.NutriFit.dto.request.RegisterRequest;
 import com.phillipe.NutriFit.exception.DuplicateUsernameException;
 import com.phillipe.NutriFit.model.entity.User;
+import com.phillipe.NutriFit.config.RateLimitConfig;
 import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,9 @@ class UserControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private RateLimitConfig rateLimitConfig;
 
     // ==================== REGISTER TESTS ====================
 

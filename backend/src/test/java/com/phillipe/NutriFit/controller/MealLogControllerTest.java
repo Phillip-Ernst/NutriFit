@@ -5,6 +5,7 @@ import com.phillipe.NutriFit.dto.request.FoodItemRequest;
 import com.phillipe.NutriFit.dto.request.MealLogRequest;
 import com.phillipe.NutriFit.dto.response.FoodItemResponse;
 import com.phillipe.NutriFit.dto.response.MealLogResponse;
+import com.phillipe.NutriFit.config.RateLimitConfig;
 import com.phillipe.NutriFit.config.SecurityConfig;
 import com.phillipe.NutriFit.service.JwtService;
 import com.phillipe.NutriFit.service.MealLogService;
@@ -51,6 +52,9 @@ class MealLogControllerTest {
 
     @MockitoBean
     private MyUserDetailsService myUserDetailsService;
+
+    @MockitoBean
+    private RateLimitConfig rateLimitConfig;
 
     // ==================== CREATE MEAL TESTS ====================
 
