@@ -89,16 +89,16 @@ describe('RegisterPage', () => {
   });
 
   describe('form validation', () => {
-    it('shows error when password is less than 6 characters', async () => {
+    it('shows error when password is less than 8 characters', async () => {
       const user = userEvent.setup();
       renderRegisterPage();
 
       await user.type(screen.getByLabelText(/^username$/i), 'newuser');
-      await user.type(screen.getByLabelText(/^password$/i), '12345');
-      await user.type(screen.getByLabelText(/confirm password/i), '12345');
+      await user.type(screen.getByLabelText(/^password$/i), '1234567');
+      await user.type(screen.getByLabelText(/confirm password/i), '1234567');
       await user.click(screen.getByRole('button', { name: /create account/i }));
 
-      expect(screen.getByText('Password must be at least 6 characters.')).toBeInTheDocument();
+      expect(screen.getByText('Password must be at least 8 characters.')).toBeInTheDocument();
     });
 
     it('shows error when passwords do not match', async () => {
@@ -163,7 +163,13 @@ describe('RegisterPage', () => {
     });
 
     it('displays error message when username already exists', async () => {
-      const mockRegister = vi.fn().mockRejectedValue(new Error('Username already taken'));
+      const axiosError = {
+        response: {
+          status: 409,
+          data: { message: "Username 'existinguser' is already taken" },
+        },
+      };
+      const mockRegister = vi.fn().mockRejectedValue(axiosError);
       const user = userEvent.setup();
 
       renderRegisterPage({ register: mockRegister });
@@ -174,7 +180,7 @@ describe('RegisterPage', () => {
       await user.click(screen.getByRole('button', { name: /create account/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/username already taken/i)).toBeInTheDocument();
+        expect(screen.getByText(/already taken/i)).toBeInTheDocument();
       });
     });
 
@@ -235,7 +241,7 @@ describe('RegisterPage', () => {
       renderRegisterPage();
 
       expect(screen.getByPlaceholderText(/choose a username/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/at least 6 characters/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/at least 8 characters/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/re-enter your password/i)).toBeInTheDocument();
     });
   });

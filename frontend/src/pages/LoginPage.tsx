@@ -27,8 +27,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(username, password);
-    } catch {
-      setError('Invalid username or password.');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const apiMessage = axiosError.response?.data?.message;
+      setError(apiMessage || 'Invalid username or password.');
     } finally {
       setLoading(false);
     }

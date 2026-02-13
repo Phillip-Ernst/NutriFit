@@ -26,8 +26,8 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
     if (password !== confirmPassword) {
@@ -39,11 +39,10 @@ export default function RegisterPage() {
     try {
       await register(username, password);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Registration failed. Username may already be taken.');
-      } else {
-        setError('Registration failed. Username may already be taken.');
-      }
+      // Extract message from API response if available
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const apiMessage = axiosError.response?.data?.message;
+      setError(apiMessage || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -76,7 +75,7 @@ export default function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="new-password"
-            placeholder="At least 6 characters"
+            placeholder="At least 8 characters"
           />
           <Input
             label="Confirm Password"
