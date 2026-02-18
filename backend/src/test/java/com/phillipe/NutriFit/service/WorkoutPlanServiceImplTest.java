@@ -25,9 +25,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,7 +83,7 @@ class WorkoutPlanServiceImplTest {
             WorkoutPlan saved = invocation.getArgument(0);
             saved.setId(1L);
             if (!saved.getDays().isEmpty()) {
-                saved.getDays().get(0).setId(10L);
+                saved.getDays().iterator().next().setId(10L);
             }
             return saved;
         });
@@ -144,7 +145,7 @@ class WorkoutPlanServiceImplTest {
                 .user(user)
                 .name("Plan A")
                 .createdAt(Instant.now())
-                .days(new ArrayList<>())
+                .days(new LinkedHashSet<>())
                 .build();
 
         WorkoutPlan plan2 = WorkoutPlan.builder()
@@ -152,7 +153,7 @@ class WorkoutPlanServiceImplTest {
                 .user(user)
                 .name("Plan B")
                 .createdAt(Instant.now().minusSeconds(3600))
-                .days(new ArrayList<>())
+                .days(new LinkedHashSet<>())
                 .build();
 
         when(userRepo.findByUsername("testuser")).thenReturn(user);
@@ -198,7 +199,7 @@ class WorkoutPlanServiceImplTest {
                 .user(user)
                 .name("Test Plan")
                 .createdAt(Instant.now())
-                .days(new ArrayList<>())
+                .days(new LinkedHashSet<>())
                 .build();
 
         when(userRepo.findByUsername("testuser")).thenReturn(user);
@@ -241,7 +242,7 @@ class WorkoutPlanServiceImplTest {
                 .name("Old Name")
                 .description("Old Desc")
                 .createdAt(Instant.now())
-                .days(new ArrayList<>())
+                .days(new LinkedHashSet<>())
                 .build();
 
         WorkoutPlanRequest request = WorkoutPlanRequest.builder()
@@ -258,7 +259,7 @@ class WorkoutPlanServiceImplTest {
         when(workoutPlanRepo.save(any(WorkoutPlan.class))).thenAnswer(invocation -> {
             WorkoutPlan saved = invocation.getArgument(0);
             if (!saved.getDays().isEmpty()) {
-                saved.getDays().get(0).setId(20L);
+                saved.getDays().iterator().next().setId(20L);
             }
             return saved;
         });
@@ -284,7 +285,7 @@ class WorkoutPlanServiceImplTest {
                 .id(1L)
                 .user(user)
                 .name("To Delete")
-                .days(new ArrayList<>())
+                .days(new LinkedHashSet<>())
                 .build();
 
         when(userRepo.findByUsername("testuser")).thenReturn(user);
@@ -339,7 +340,7 @@ class WorkoutPlanServiceImplTest {
                 .workoutPlan(plan)
                 .dayNumber(1)
                 .dayName("Leg Day")
-                .exercises(List.of(exercise))
+                .exercises(Set.of(exercise))
                 .build();
 
         when(userRepo.findByUsername("testuser")).thenReturn(user);

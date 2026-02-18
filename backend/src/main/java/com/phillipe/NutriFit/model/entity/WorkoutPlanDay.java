@@ -4,20 +4,22 @@ import com.phillipe.NutriFit.model.embedded.WorkoutPlanExercise;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "workout_plan_day")
 public class WorkoutPlanDay {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -25,6 +27,7 @@ public class WorkoutPlanDay {
     private WorkoutPlan workoutPlan;
 
     @Column(nullable = false)
+    @EqualsAndHashCode.Include
     private Integer dayNumber;
 
     @Column(nullable = false)
@@ -33,5 +36,5 @@ public class WorkoutPlanDay {
     @Builder.Default
     @ElementCollection
     @CollectionTable(name = "workout_plan_day_exercises", joinColumns = @JoinColumn(name = "workout_plan_day_id"))
-    private List<WorkoutPlanExercise> exercises = new ArrayList<>();
+    private Set<WorkoutPlanExercise> exercises = new LinkedHashSet<>();
 }

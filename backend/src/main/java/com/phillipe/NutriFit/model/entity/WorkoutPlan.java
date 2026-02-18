@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -35,7 +35,7 @@ public class WorkoutPlan {
 
     @Builder.Default
     @OneToMany(mappedBy = "workoutPlan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WorkoutPlanDay> days = new ArrayList<>();
+    private Set<WorkoutPlanDay> days = new LinkedHashSet<>();
 
     public void addDay(WorkoutPlanDay day) {
         days.add(day);
