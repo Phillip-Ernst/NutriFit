@@ -6,17 +6,26 @@ spring:
     servlet:
       path: /api
 
+  # Datasource can be configured via environment variables:
+  # SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:}
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     show-sql: false  # Controlled via logback-spring.xml
     open-in-view: false
 
   flyway:
-    enabled: true
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
     baseline-on-migrate: true
-    baseline-version: '1'
+    baseline-version: '0'
     locations: classpath:db/migration
+    # Validate migrations match what's in the database
+    validate-on-migrate: true
 
 server:
   port: 8080

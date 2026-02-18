@@ -5,29 +5,46 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "workout_plan_day")
 public class WorkoutPlanDay {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
+
+    // UUID for equals/hashCode before entity is persisted
+    @Builder.Default
+    @Column(nullable = false, updatable = false, unique = true)
+    private String uuid = UUID.randomUUID().toString();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WorkoutPlanDay that = (WorkoutPlanDay) o;
+        return Objects.equals(uuid, that.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
+    }
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "workout_plan_id", nullable = false)
     private WorkoutPlan workoutPlan;
 
     @Column(nullable = false)
-    @EqualsAndHashCode.Include
     private Integer dayNumber;
 
     @Column(nullable = false)

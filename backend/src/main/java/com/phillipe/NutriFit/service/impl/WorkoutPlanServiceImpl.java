@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -198,6 +199,7 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
 
     private WorkoutPlanResponse toResponse(WorkoutPlan plan) {
         List<WorkoutPlanDayResponse> days = plan.getDays().stream()
+                .sorted(Comparator.comparing(WorkoutPlanDay::getDayNumber))
                 .map(this::toDayResponse)
                 .toList();
 
