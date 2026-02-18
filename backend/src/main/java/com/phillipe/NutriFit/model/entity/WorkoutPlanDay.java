@@ -4,9 +4,9 @@ import com.phillipe.NutriFit.model.embedded.WorkoutPlanExercise;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -53,5 +53,5 @@ public class WorkoutPlanDay {
     @Builder.Default
     @ElementCollection
     @CollectionTable(name = "workout_plan_day_exercises", joinColumns = @JoinColumn(name = "workout_plan_day_id"))
-    private List<WorkoutPlanExercise> exercises = new ArrayList<>();
+    private Set<WorkoutPlanExercise> exercises = new LinkedHashSet<>();
 }

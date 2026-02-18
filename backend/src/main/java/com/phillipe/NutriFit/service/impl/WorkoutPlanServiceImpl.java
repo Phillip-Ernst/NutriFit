@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -176,7 +177,7 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         WorkoutPlanDay day = WorkoutPlanDay.builder()
                 .dayNumber(request.getDayNumber())
                 .dayName(request.getDayName())
-                .exercises(new ArrayList<>())
+                .exercises(new LinkedHashSet<>())
                 .build();
 
         if (request.getExercises() != null) {
