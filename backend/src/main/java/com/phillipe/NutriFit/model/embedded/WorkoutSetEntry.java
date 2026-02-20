@@ -10,23 +10,17 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WorkoutExerciseEntry {
+public class WorkoutSetEntry {
 
     @Column(nullable = false)
-    private String name;
-
-    private String category;
-
-    private Integer durationMinutes;
-
-    private Integer sets;
+    private Integer setNumber;
 
     private Integer reps;
 
     private Integer weight;
 
-    private Integer caloriesBurned;
+    @Builder.Default
+    private Boolean completed = true;
 
-    @Column(name = "set_details")
-    private String setDetailsJson;
+    private String notes;
 }

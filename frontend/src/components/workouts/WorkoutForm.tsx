@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateWorkout } from '../../hooks/useWorkouts';
-import type { ExerciseItem } from '../../types';
+import type { ExerciseItem, SetItem } from '../../types';
 import ExerciseItemRow from './ExerciseItemRow';
 import Button from '../ui/Button';
 
@@ -22,16 +22,20 @@ export default function WorkoutForm() {
   const createWorkout = useCreateWorkout();
   const navigate = useNavigate();
 
-  const handleChange = (index: number, field: keyof ExerciseItem, value: string) => {
+  const handleChange = (index: number, field: keyof ExerciseItem, value: string | SetItem[]) => {
     setExercises((prev) => {
       const updated = [...prev];
-      if (field === 'name' || field === 'category') {
-        updated[index] = { ...updated[index], [field]: value === '' ? null : value };
+      if (field === 'setDetails') {
+        updated[index] = { ...updated[index], setDetails: value as SetItem[] };
+      } else if (field === 'name' || field === 'category') {
+        const strValue = value as string;
+        updated[index] = { ...updated[index], [field]: strValue === '' ? null : strValue };
         if (field === 'name') {
-          updated[index].name = value;
+          updated[index].name = strValue;
         }
       } else {
-        updated[index] = { ...updated[index], [field]: value === '' ? null : Number(value) };
+        const strValue = value as string;
+        updated[index] = { ...updated[index], [field]: strValue === '' ? null : Number(strValue) };
       }
       return updated;
     });

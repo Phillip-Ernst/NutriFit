@@ -1,46 +1,120 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { WorkoutPlanDay, ExerciseItem } from '../../types';
+import type { WorkoutPlanDay, ExerciseItem, SetItem } from '../../types';
 import { useCreateWorkoutFromPlan } from '../../hooks/useWorkoutPlans';
 import Button from '../ui/Button';
+import SetRow from '../workouts/SetRow';
 
 interface ExecuteWorkoutFormProps {
   planDay: WorkoutPlanDay;
 }
 
+function createSetDetails(targetSets: number | null, targetReps: number | null, targetWeight: number | null): SetItem[] {
+  const numSets = targetSets ?? 1;
+  const setDetails: SetItem[] = [];
+  for (let i = 0; i < numSets; i++) {
+    setDetails.push({
+      id: crypto.randomUUID(),
+      setNumber: i + 1,
+      reps: targetReps,
+      weight: targetWeight,
+      completed: false,
+    });
+  }
+  return setDetails;
+}
+
 export default function ExecuteWorkoutForm({ planDay }: ExecuteWorkoutFormProps) {
   const [exercises, setExercises] = useState<ExerciseItem[]>(
-    planDay.exercises.map((ex) => ({
-      id: ex.id ?? crypto.randomUUID(),
-      name: ex.name,
-      category: ex.category,
-      sets: ex.targetSets,
-      reps: ex.targetReps,
-      weight: ex.targetWeight,
-      durationMinutes: null,
-      caloriesBurned: null,
-    }))
+    planDay.exercises.map((ex) => {
+      const isCardio = ex.category?.toUpperCase() === 'CARDIO';
+      return {
+        id: ex.id ?? crypto.randomUUID(),
+        name: ex.name,
+        category: ex.category,
+        sets: ex.targetSets,
+        reps: ex.targetReps,
+        weight: ex.targetWeight,
+        durationMinutes: null,
+        caloriesBurned: null,
+        setDetails: isCardio ? undefined : createSetDetails(ex.targetSets, ex.targetReps, ex.targetWeight),
+      };
+    })
   );
   const [error, setError] = useState('');
 
   const createWorkout = useCreateWorkoutFromPlan();
   const navigate = useNavigate();
 
-  const handleChange = (
+  const handleSetChange = (
+    exerciseIndex: number,
+    setIndex: number,
+    field: keyof SetItem,
+    value: string | boolean
+  ) => {
+    setExercises((prev) => {
+      const updated = [...prev];
+      const exercise = updated[exerciseIndex];
+      if (!exercise.setDetails) return prev;
+
+      const newSetDetails = [...exercise.setDetails];
+      if (field === 'completed') {
+        newSetDetails[setIndex] = { ...newSetDetails[setIndex], [field]: value as boolean };
+      } else if (field === 'reps' || field === 'weight') {
+        newSetDetails[setIndex] = {
+          ...newSetDetails[setIndex],
+          [field]: value === '' ? null : Number(value),
+        };
+      }
+      updated[exerciseIndex] = { ...exercise, setDetails: newSetDetails };
+      return updated;
+    });
+  };
+
+  const handleRemoveSet = (exerciseIndex: number, setIndex: number) => {
+    setExercises((prev) => {
+      const updated = [...prev];
+      const exercise = updated[exerciseIndex];
+      if (!exercise.setDetails) return prev;
+
+      const newSetDetails = exercise.setDetails
+        .filter((_, i) => i !== setIndex)
+        .map((set, i) => ({ ...set, setNumber: i + 1 }));
+      updated[exerciseIndex] = { ...exercise, setDetails: newSetDetails };
+      return updated;
+    });
+  };
+
+  const handleAddSet = (exerciseIndex: number) => {
+    setExercises((prev) => {
+      const updated = [...prev];
+      const exercise = updated[exerciseIndex];
+      const setDetails = exercise.setDetails ?? [];
+      const lastSet = setDetails[setDetails.length - 1];
+
+      const newSetDetails = [
+        ...setDetails,
+        {
+          id: crypto.randomUUID(),
+          setNumber: setDetails.length + 1,
+          reps: lastSet?.reps ?? null,
+          weight: lastSet?.weight ?? null,
+          completed: false,
+        },
+      ];
+      updated[exerciseIndex] = { ...exercise, setDetails: newSetDetails };
+      return updated;
+    });
+  };
+
+  const handleCardioChange = (
     index: number,
-    field: keyof ExerciseItem,
+    field: 'durationMinutes' | 'caloriesBurned',
     value: string
   ) => {
     setExercises((prev) => {
       const updated = [...prev];
-      if (field === 'name' || field === 'category') {
-        updated[index] = { ...updated[index], [field]: value === '' ? null : value };
-        if (field === 'name') {
-          updated[index].name = value;
-        }
-      } else {
-        updated[index] = { ...updated[index], [field]: value === '' ? null : Number(value) };
-      }
+      updated[index] = { ...updated[index], [field]: value === '' ? null : Number(value) };
       return updated;
     });
   };
@@ -86,65 +160,51 @@ export default function ExecuteWorkoutForm({ planDay }: ExecuteWorkoutFormProps)
               )}
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              {exercise.category?.toUpperCase() === 'CARDIO' ? (
-                <>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Duration (mins)</label>
-                    <input
-                      type="number"
-                      value={exercise.durationMinutes ?? ''}
-                      onChange={(e) => handleChange(i, 'durationMinutes', e.target.value)}
-                      min="0"
-                      className="w-28 bg-gray-700 border border-gray-600 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Calories Burned</label>
-                    <input
-                      type="number"
-                      value={exercise.caloriesBurned ?? ''}
-                      onChange={(e) => handleChange(i, 'caloriesBurned', e.target.value)}
-                      min="0"
-                      className="w-28 bg-gray-700 border border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Sets</label>
-                    <input
-                      type="number"
-                      value={exercise.sets ?? ''}
-                      onChange={(e) => handleChange(i, 'sets', e.target.value)}
-                      min="0"
-                      className="w-16 bg-gray-700 border border-gray-600 focus:border-purple-400 focus:ring-1 focus:ring-purple-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Reps</label>
-                    <input
-                      type="number"
-                      value={exercise.reps ?? ''}
-                      onChange={(e) => handleChange(i, 'reps', e.target.value)}
-                      min="0"
-                      className="w-16 bg-gray-700 border border-gray-600 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Weight</label>
-                    <input
-                      type="number"
-                      value={exercise.weight ?? ''}
-                      onChange={(e) => handleChange(i, 'weight', e.target.value)}
-                      min="0"
-                      className="w-20 bg-gray-700 border border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {exercise.category?.toUpperCase() === 'CARDIO' ? (
+              <div className="flex flex-wrap gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Duration (mins)</label>
+                  <input
+                    type="number"
+                    value={exercise.durationMinutes ?? ''}
+                    onChange={(e) => handleCardioChange(i, 'durationMinutes', e.target.value)}
+                    min="0"
+                    className="w-28 bg-gray-700 border border-gray-600 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Calories Burned</label>
+                  <input
+                    type="number"
+                    value={exercise.caloriesBurned ?? ''}
+                    onChange={(e) => handleCardioChange(i, 'caloriesBurned', e.target.value)}
+                    min="0"
+                    className="w-28 bg-gray-700 border border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-400 text-white rounded-md px-2 py-1.5 text-sm outline-none"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1 border-l-2 border-gray-700">
+                {exercise.setDetails?.map((setItem, setIndex) => (
+                  <SetRow
+                    key={setItem.id}
+                    setItem={setItem}
+                    onChange={(field, value) => handleSetChange(i, setIndex, field, value)}
+                    onRemove={() => handleRemoveSet(i, setIndex)}
+                    canRemove={(exercise.setDetails?.length ?? 0) > 1}
+                  />
+                ))}
+                <div className="pl-4 py-1">
+                  <button
+                    type="button"
+                    onClick={() => handleAddSet(i)}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    + Add Set
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

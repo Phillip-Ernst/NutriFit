@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WorkoutLogResponse } from '../../types';
+import type { WorkoutLogResponse, ExerciseItem } from '../../types';
 import Card from '../ui/Card';
 
 function formatDate(iso: string): string {
@@ -13,6 +13,10 @@ function formatDate(iso: string): string {
 
 function isCardioExercise(category: string | null): boolean {
   return category?.toUpperCase() === 'CARDIO';
+}
+
+function hasSetDetails(exercise: ExerciseItem): boolean {
+  return Boolean(exercise.setDetails && exercise.setDetails.length > 0);
 }
 
 interface WorkoutCardProps {
@@ -70,43 +74,76 @@ export default function WorkoutCard({ workout, onDelete, isDeleting = false }: W
       </button>
 
       {expanded && (
-        <div className="border-t border-gray-800 pt-3 space-y-2">
+        <div className="border-t border-gray-800 pt-3 space-y-3">
           {workout.exercises.map((exercise, i) => {
             const isCardio = isCardioExercise(exercise.category);
+            const hasDetails = hasSetDetails(exercise);
+
             return (
-              <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-200 font-medium">{exercise.name}</span>
-                  {exercise.category && (
-                    <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-                      {exercise.category}
-                    </span>
-                  )}
+              <div key={exercise.id ?? i} className="text-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-200 font-medium">{exercise.name}</span>
+                    {exercise.category && (
+                      <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                        {exercise.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-gray-400">
+                    {isCardio ? (
+                      <>
+                        {exercise.durationMinutes !== null && (
+                          <span className="text-blue-400">{exercise.durationMinutes}min</span>
+                        )}
+                        {exercise.caloriesBurned !== null && (
+                          <span className="text-orange-400">{exercise.caloriesBurned}cal</span>
+                        )}
+                      </>
+                    ) : !hasDetails ? (
+                      <>
+                        {exercise.sets !== null && (
+                          <span className="text-purple-400">{exercise.sets}s</span>
+                        )}
+                        {exercise.reps !== null && (
+                          <span className="text-pink-400">{exercise.reps}r</span>
+                        )}
+                        {exercise.weight !== null && (
+                          <span className="text-amber-400">{exercise.weight}lbs</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-gray-500">{exercise.setDetails!.length} sets</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-gray-400">
-                  {isCardio ? (
-                    <>
-                      {exercise.durationMinutes !== null && (
-                        <span className="text-blue-400">{exercise.durationMinutes}min</span>
-                      )}
-                      {exercise.caloriesBurned !== null && (
-                        <span className="text-orange-400">{exercise.caloriesBurned}cal</span>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {exercise.sets !== null && (
-                        <span className="text-purple-400">{exercise.sets}s</span>
-                      )}
-                      {exercise.reps !== null && (
-                        <span className="text-pink-400">{exercise.reps}r</span>
-                      )}
-                      {exercise.weight !== null && (
-                        <span className="text-amber-400">{exercise.weight}lbs</span>
-                      )}
-                    </>
-                  )}
-                </div>
+
+                {hasDetails && (
+                  <div className="mt-2 ml-4 border-l-2 border-gray-700 pl-3 space-y-1">
+                    {exercise.setDetails!.map((set) => (
+                      <div
+                        key={set.id ?? set.setNumber}
+                        className={`flex items-center gap-3 text-xs ${
+                          set.completed === false ? 'text-gray-500' : 'text-gray-300'
+                        }`}
+                      >
+                        <span className="text-gray-500 w-12">Set {set.setNumber}</span>
+                        {set.reps !== null && (
+                          <span className="text-pink-400">{set.reps} reps</span>
+                        )}
+                        {set.weight !== null && (
+                          <span className="text-amber-400">{set.weight} lbs</span>
+                        )}
+                        {set.completed === false && (
+                          <span className="text-gray-500 italic">skipped</span>
+                        )}
+                        {set.notes && (
+                          <span className="text-gray-500 italic">{set.notes}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

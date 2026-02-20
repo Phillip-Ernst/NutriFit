@@ -1,3 +1,5 @@
+# Docker profile - for running Spring Boot inside a Docker container
+# Uses same DB credentials as local since both connect to Docker PostgreSQL
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}

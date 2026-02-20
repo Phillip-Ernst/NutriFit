@@ -1,22 +1,25 @@
 package com.phillipe.NutriFit.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phillipe.NutriFit.repository.UserRepository;
 import com.phillipe.NutriFit.model.entity.User;
 import com.phillipe.NutriFit.repository.WorkoutLogRepository;
 import com.phillipe.NutriFit.dto.request.ExerciseItemRequest;
+import com.phillipe.NutriFit.dto.request.SetItemRequest;
 import com.phillipe.NutriFit.dto.request.WorkoutLogRequest;
 import com.phillipe.NutriFit.dto.response.WorkoutLogResponse;
 import com.phillipe.NutriFit.model.entity.WorkoutLog;
+import com.phillipe.NutriFit.model.embedded.WorkoutExerciseEntry;
 import com.phillipe.NutriFit.repository.WorkoutPlanDayRepository;
 import com.phillipe.NutriFit.dto.request.WorkoutLogFromPlanRequest;
 import com.phillipe.NutriFit.model.entity.WorkoutPlan;
 import com.phillipe.NutriFit.model.entity.WorkoutPlanDay;
 import com.phillipe.NutriFit.service.impl.WorkoutLogServiceImpl;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -42,8 +45,15 @@ class WorkoutLogServiceImplTest {
     @Mock
     private UserRepository userRepo;
 
-    @InjectMocks
+    private ObjectMapper objectMapper;
+
     private WorkoutLogServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
+        service = new WorkoutLogServiceImpl(workoutLogRepo, workoutPlanDayRepo, userRepo, objectMapper);
+    }
 
     @Test
     void createWorkout_shouldPersistWorkoutForUser() {
@@ -378,5 +388,193 @@ class WorkoutLogServiceImplTest {
         verify(userRepo).findByUsername("unknownuser");
         verifyNoInteractions(workoutPlanDayRepo);
         verifyNoInteractions(workoutLogRepo);
+    }
+
+    @Test
+    void createWorkout_withSetDetails_shouldCalculateTotalsFromSets() {
+        // arrange
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+
+        List<SetItemRequest> setDetails = List.of(
+                SetItemRequest.builder().setNumber(1).reps(10).weight(135).completed(true).build(),
+                SetItemRequest.builder().setNumber(2).reps(8).weight(145).completed(true).build(),
+                SetItemRequest.builder().setNumber(3).reps(6).weight(155).completed(true).build()
+        );
+
+        ExerciseItemRequest exercise = ExerciseItemRequest.builder()
+                .name("Bench Press")
+                .category("CHEST")
+                .setDetails(setDetails)
+                .build();
+
+        WorkoutLogRequest request = WorkoutLogRequest.builder()
+                .exercises(List.of(exercise))
+                .build();
+
+        when(userRepo.findByUsername("testuser")).thenReturn(user);
+        when(workoutLogRepo.save(any(WorkoutLog.class))).thenAnswer(invocation -> {
+            WorkoutLog saved = invocation.getArgument(0);
+            saved.setId(1L);
+            return saved;
+        });
+
+        // act
+        WorkoutLogResponse response = service.createWorkout(request, "testuser");
+
+        // assert
+        assertNotNull(response);
+        assertEquals(3, response.getTotalSets()); // 3 sets from setDetails
+        assertEquals(24, response.getTotalReps()); // 10 + 8 + 6 = 24 reps
+        assertEquals(1, response.getExercises().size());
+
+        // Verify setDetails are returned in response
+        ExerciseItemRequest responseExercise = response.getExercises().get(0);
+        assertNotNull(responseExercise.getSetDetails());
+        assertEquals(3, responseExercise.getSetDetails().size());
+        assertEquals(10, responseExercise.getSetDetails().get(0).getReps());
+        assertEquals(135, responseExercise.getSetDetails().get(0).getWeight());
+    }
+
+    @Test
+    void createWorkout_withSetDetails_shouldSerializeAndDeserializeSetDetails() {
+        // arrange
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+
+        List<SetItemRequest> setDetails = List.of(
+                SetItemRequest.builder().setNumber(1).reps(12).weight(100).completed(true).notes("warm-up").build(),
+                SetItemRequest.builder().setNumber(2).reps(10).weight(120).completed(true).build()
+        );
+
+        ExerciseItemRequest exercise = ExerciseItemRequest.builder()
+                .name("Squat")
+                .category("QUADS")
+                .setDetails(setDetails)
+                .build();
+
+        WorkoutLogRequest request = WorkoutLogRequest.builder()
+                .exercises(List.of(exercise))
+                .build();
+
+        when(userRepo.findByUsername("testuser")).thenReturn(user);
+        when(workoutLogRepo.save(any(WorkoutLog.class))).thenAnswer(invocation -> {
+            WorkoutLog saved = invocation.getArgument(0);
+            saved.setId(1L);
+            return saved;
+        });
+
+        // act
+        WorkoutLogResponse response = service.createWorkout(request, "testuser");
+
+        // assert - verify setDetails are properly serialized
+        ArgumentCaptor<WorkoutLog> captor = ArgumentCaptor.forClass(WorkoutLog.class);
+        verify(workoutLogRepo).save(captor.capture());
+        WorkoutLog savedWorkout = captor.getValue();
+
+        WorkoutExerciseEntry savedEntry = savedWorkout.getExercises().get(0);
+        assertNotNull(savedEntry.getSetDetailsJson());
+        assertTrue(savedEntry.getSetDetailsJson().contains("\"setNumber\":1"));
+        assertTrue(savedEntry.getSetDetailsJson().contains("\"reps\":12"));
+
+        // Verify response has deserialized setDetails
+        List<SetItemRequest> responseSetDetails = response.getExercises().get(0).getSetDetails();
+        assertNotNull(responseSetDetails);
+        assertEquals(2, responseSetDetails.size());
+        assertEquals("warm-up", responseSetDetails.get(0).getNotes());
+    }
+
+    @Test
+    void createWorkout_withMixedExercises_shouldHandleBothScalarAndSetDetails() {
+        // arrange
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+
+        // Exercise with setDetails
+        List<SetItemRequest> setDetails = List.of(
+                SetItemRequest.builder().setNumber(1).reps(10).weight(135).completed(true).build(),
+                SetItemRequest.builder().setNumber(2).reps(8).weight(145).completed(true).build()
+        );
+
+        ExerciseItemRequest exerciseWithSets = ExerciseItemRequest.builder()
+                .name("Bench Press")
+                .category("CHEST")
+                .setDetails(setDetails)
+                .build();
+
+        // Exercise with scalar values (no setDetails)
+        ExerciseItemRequest exerciseScalar = ExerciseItemRequest.builder()
+                .name("Running")
+                .category("CARDIO")
+                .durationMinutes(30)
+                .caloriesBurned(300)
+                .sets(1)
+                .reps(1)
+                .build();
+
+        WorkoutLogRequest request = WorkoutLogRequest.builder()
+                .exercises(List.of(exerciseWithSets, exerciseScalar))
+                .build();
+
+        when(userRepo.findByUsername("testuser")).thenReturn(user);
+        when(workoutLogRepo.save(any(WorkoutLog.class))).thenAnswer(invocation -> {
+            WorkoutLog saved = invocation.getArgument(0);
+            saved.setId(1L);
+            return saved;
+        });
+
+        // act
+        WorkoutLogResponse response = service.createWorkout(request, "testuser");
+
+        // assert
+        assertEquals(3, response.getTotalSets()); // 2 from setDetails + 1 from scalar
+        assertEquals(19, response.getTotalReps()); // 10 + 8 from setDetails + 1 from scalar
+        assertEquals(30, response.getTotalDurationMinutes());
+        assertEquals(300, response.getTotalCaloriesBurned());
+
+        // First exercise should have setDetails
+        assertNotNull(response.getExercises().get(0).getSetDetails());
+        assertEquals(2, response.getExercises().get(0).getSetDetails().size());
+
+        // Second exercise should not have setDetails
+        assertNull(response.getExercises().get(1).getSetDetails());
+    }
+
+    @Test
+    void createWorkout_withEmptySetDetails_shouldUseScalarValues() {
+        // arrange
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+
+        ExerciseItemRequest exercise = ExerciseItemRequest.builder()
+                .name("Deadlift")
+                .category("BACK")
+                .sets(3)
+                .reps(5)
+                .weight(225)
+                .setDetails(List.of()) // Empty list
+                .build();
+
+        WorkoutLogRequest request = WorkoutLogRequest.builder()
+                .exercises(List.of(exercise))
+                .build();
+
+        when(userRepo.findByUsername("testuser")).thenReturn(user);
+        when(workoutLogRepo.save(any(WorkoutLog.class))).thenAnswer(invocation -> {
+            WorkoutLog saved = invocation.getArgument(0);
+            saved.setId(1L);
+            return saved;
+        });
+
+        // act
+        WorkoutLogResponse response = service.createWorkout(request, "testuser");
+
+        // assert - should use scalar values when setDetails is empty
+        assertEquals(3, response.getTotalSets());
+        assertEquals(5, response.getTotalReps());
     }
 }

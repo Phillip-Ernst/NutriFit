@@ -119,4 +119,78 @@ describe('WorkoutCard', () => {
 
     expect(screen.getByText('Show 1 exercise')).toBeInTheDocument();
   });
+
+  it('displays per-set details when setDetails is present', async () => {
+    const user = userEvent.setup();
+    const workoutWithSetDetails: WorkoutLogResponse = {
+      ...mockWorkout,
+      exercises: [
+        {
+          id: 'ex-1',
+          name: 'Bench Press',
+          category: 'Chest',
+          sets: null,
+          reps: null,
+          weight: null,
+          durationMinutes: null,
+          caloriesBurned: null,
+          setDetails: [
+            { id: 'set-1', setNumber: 1, reps: 10, weight: 135, completed: true },
+            { id: 'set-2', setNumber: 2, reps: 8, weight: 145, completed: true },
+            { id: 'set-3', setNumber: 3, reps: 6, weight: 155, completed: false },
+          ],
+        },
+      ],
+    };
+
+    render(<WorkoutCard workout={workoutWithSetDetails} />);
+
+    const expandButton = screen.getByText('Show 1 exercise');
+    await user.click(expandButton);
+
+    // Should show each set
+    expect(screen.getByText('Set 1')).toBeInTheDocument();
+    expect(screen.getByText('Set 2')).toBeInTheDocument();
+    expect(screen.getByText('Set 3')).toBeInTheDocument();
+
+    // Should show reps and weight for each set
+    expect(screen.getByText('10 reps')).toBeInTheDocument();
+    expect(screen.getByText('135 lbs')).toBeInTheDocument();
+    expect(screen.getByText('8 reps')).toBeInTheDocument();
+    expect(screen.getByText('145 lbs')).toBeInTheDocument();
+
+    // Should show skipped indicator for incomplete set
+    expect(screen.getByText('skipped')).toBeInTheDocument();
+  });
+
+  it('shows set count summary when setDetails present', async () => {
+    const user = userEvent.setup();
+    const workoutWithSetDetails: WorkoutLogResponse = {
+      ...mockWorkout,
+      exercises: [
+        {
+          id: 'ex-1',
+          name: 'Squat',
+          category: 'QUADS',
+          sets: null,
+          reps: null,
+          weight: null,
+          durationMinutes: null,
+          caloriesBurned: null,
+          setDetails: [
+            { id: 'set-1', setNumber: 1, reps: 8, weight: 200, completed: true },
+            { id: 'set-2', setNumber: 2, reps: 8, weight: 200, completed: true },
+          ],
+        },
+      ],
+    };
+
+    render(<WorkoutCard workout={workoutWithSetDetails} />);
+
+    const expandButton = screen.getByText('Show 1 exercise');
+    await user.click(expandButton);
+
+    // Should show "2 sets" summary instead of individual set/rep/weight
+    expect(screen.getByText('2 sets')).toBeInTheDocument();
+  });
 });

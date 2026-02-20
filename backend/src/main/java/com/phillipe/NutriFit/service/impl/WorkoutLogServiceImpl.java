@@ -1,9 +1,13 @@
 package com.phillipe.NutriFit.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phillipe.NutriFit.repository.UserRepository;
 import com.phillipe.NutriFit.model.entity.User;
 import com.phillipe.NutriFit.repository.WorkoutLogRepository;
 import com.phillipe.NutriFit.dto.request.ExerciseItemRequest;
+import com.phillipe.NutriFit.dto.request.SetItemRequest;
 import com.phillipe.NutriFit.dto.request.WorkoutLogRequest;
 import com.phillipe.NutriFit.dto.response.WorkoutLogResponse;
 import com.phillipe.NutriFit.model.embedded.WorkoutExerciseEntry;
@@ -17,6 +21,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -25,13 +30,16 @@ public class WorkoutLogServiceImpl implements WorkoutLogService {
     private final WorkoutLogRepository workoutLogRepo;
     private final WorkoutPlanDayRepository workoutPlanDayRepo;
     private final UserRepository userRepo;
+    private final ObjectMapper objectMapper;
 
     public WorkoutLogServiceImpl(WorkoutLogRepository workoutLogRepo,
                                   WorkoutPlanDayRepository workoutPlanDayRepo,
-                                  UserRepository userRepo) {
+                                  UserRepository userRepo,
+                                  ObjectMapper objectMapper) {
         this.workoutLogRepo = workoutLogRepo;
         this.workoutPlanDayRepo = workoutPlanDayRepo;
         this.userRepo = userRepo;
+        this.objectMapper = objectMapper;
     }
 
     private int nz(Integer v) { return v == null ? 0 : v; }
@@ -48,30 +56,7 @@ public class WorkoutLogServiceImpl implements WorkoutLogService {
                 .user(user)
                 .build();
 
-        int totalDuration = 0, totalCalories = 0, totalSets = 0, totalReps = 0;
-
-        for (ExerciseItemRequest exercise : request.getExercises()) {
-            WorkoutExerciseEntry entry = new WorkoutExerciseEntry(
-                    exercise.getName(),
-                    exercise.getCategory(),
-                    exercise.getDurationMinutes(),
-                    exercise.getSets(),
-                    exercise.getReps(),
-                    exercise.getWeight(),
-                    exercise.getCaloriesBurned()
-            );
-            workout.getExercises().add(entry);
-
-            totalDuration += nz(exercise.getDurationMinutes());
-            totalCalories += nz(exercise.getCaloriesBurned());
-            totalSets += nz(exercise.getSets());
-            totalReps += nz(exercise.getReps());
-        }
-
-        workout.setTotalDurationMinutes(totalDuration);
-        workout.setTotalCaloriesBurned(totalCalories);
-        workout.setTotalSets(totalSets);
-        workout.setTotalReps(totalReps);
+        populateWorkoutFromExercises(workout, request.getExercises());
 
         WorkoutLog saved = workoutLogRepo.save(workout);
         return toResponse(saved);
@@ -94,33 +79,58 @@ public class WorkoutLogServiceImpl implements WorkoutLogService {
                 .workoutPlanDay(planDay)
                 .build();
 
+        populateWorkoutFromExercises(workout, request.getExercises());
+
+        WorkoutLog saved = workoutLogRepo.save(workout);
+        return toResponse(saved);
+    }
+
+    private void populateWorkoutFromExercises(WorkoutLog workout, List<ExerciseItemRequest> exercises) {
         int totalDuration = 0, totalCalories = 0, totalSets = 0, totalReps = 0;
 
-        for (ExerciseItemRequest exercise : request.getExercises()) {
-            WorkoutExerciseEntry entry = new WorkoutExerciseEntry(
-                    exercise.getName(),
-                    exercise.getCategory(),
-                    exercise.getDurationMinutes(),
-                    exercise.getSets(),
-                    exercise.getReps(),
-                    exercise.getWeight(),
-                    exercise.getCaloriesBurned()
-            );
+        for (ExerciseItemRequest exercise : exercises) {
+            List<SetItemRequest> setDetails = exercise.getSetDetails();
+            String setDetailsJson = null;
+
+            if (setDetails != null && !setDetails.isEmpty()) {
+                try {
+                    setDetailsJson = objectMapper.writeValueAsString(setDetails);
+                } catch (JsonProcessingException e) {
+                    throw new IllegalArgumentException("Failed to serialize set details", e);
+                }
+
+                // Calculate totals from setDetails
+                totalSets += setDetails.size();
+                totalReps += setDetails.stream()
+                        .mapToInt(s -> nz(s.getReps()))
+                        .sum();
+            } else {
+                // Use scalar values
+                totalSets += nz(exercise.getSets());
+                totalReps += nz(exercise.getReps());
+            }
+
+            WorkoutExerciseEntry entry = WorkoutExerciseEntry.builder()
+                    .name(exercise.getName())
+                    .category(exercise.getCategory())
+                    .durationMinutes(exercise.getDurationMinutes())
+                    .sets(exercise.getSets())
+                    .reps(exercise.getReps())
+                    .weight(exercise.getWeight())
+                    .caloriesBurned(exercise.getCaloriesBurned())
+                    .setDetailsJson(setDetailsJson)
+                    .build();
+
             workout.getExercises().add(entry);
 
             totalDuration += nz(exercise.getDurationMinutes());
             totalCalories += nz(exercise.getCaloriesBurned());
-            totalSets += nz(exercise.getSets());
-            totalReps += nz(exercise.getReps());
         }
 
         workout.setTotalDurationMinutes(totalDuration);
         workout.setTotalCaloriesBurned(totalCalories);
         workout.setTotalSets(totalSets);
         workout.setTotalReps(totalReps);
-
-        WorkoutLog saved = workoutLogRepo.save(workout);
-        return toResponse(saved);
     }
 
     @Override
@@ -172,6 +182,20 @@ public class WorkoutLogServiceImpl implements WorkoutLogService {
             ex.setReps(e.getReps());
             ex.setWeight(e.getWeight());
             ex.setCaloriesBurned(e.getCaloriesBurned());
+
+            // Deserialize setDetails if present
+            if (e.getSetDetailsJson() != null && !e.getSetDetailsJson().isBlank()) {
+                try {
+                    List<SetItemRequest> setDetails = objectMapper.readValue(
+                            e.getSetDetailsJson(),
+                            new TypeReference<List<SetItemRequest>>() {}
+                    );
+                    ex.setSetDetails(setDetails);
+                } catch (JsonProcessingException ignored) {
+                    // If deserialization fails, leave setDetails null
+                }
+            }
+
             return ex;
         }).toList();
 

@@ -1,8 +1,11 @@
 package com.phillipe.NutriFit.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -29,4 +32,6 @@ public class ExerciseItemRequest {
 
     @Min(value = 0, message = "calories burned must be non-negative")
     private Integer caloriesBurned;
+
+    private List<@Valid SetItemRequest> setDetails;
 }

@@ -46,6 +46,15 @@ export interface MealLogResponse {
 
 // === Workouts ===
 
+export interface SetItem {
+  id?: string;
+  setNumber: number;
+  reps: number | null;
+  weight: number | null;
+  completed?: boolean;
+  notes?: string | null;
+}
+
 export interface ExerciseItem {
   id?: string;
   name: string;
@@ -55,6 +64,7 @@ export interface ExerciseItem {
   reps: number | null;
   weight: number | null;
   caloriesBurned: number | null;
+  setDetails?: SetItem[];
 }
 
 export interface WorkoutLogRequest {
