@@ -1,11 +1,16 @@
-package com.phillipe.NutriFit.model.embedded;
+package com.phillipe.nutrifit.nutrition.model.embedded;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Embeddable
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -15,10 +20,7 @@ public class MealFoodEntry {
     private String type;
 
     private Integer calories;
-
     private Integer protein;
-
     private Integer carbs;
-
     private Integer fats;
 }

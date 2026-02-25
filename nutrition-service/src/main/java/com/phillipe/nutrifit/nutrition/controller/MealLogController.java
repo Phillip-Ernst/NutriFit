@@ -1,13 +1,19 @@
-package com.phillipe.NutriFit.controller;
+package com.phillipe.nutrifit.nutrition.controller;
 
-import com.phillipe.NutriFit.dto.request.MealLogRequest;
-import com.phillipe.NutriFit.dto.response.MealLogResponse;
-import com.phillipe.NutriFit.service.MealLogService;
+import com.phillipe.nutrifit.nutrition.dto.request.MealLogRequest;
+import com.phillipe.nutrifit.nutrition.dto.response.MealLogResponse;
+import com.phillipe.nutrifit.nutrition.service.MealLogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -18,24 +24,19 @@ public class MealLogController {
 
     private final MealLogService mealLogService;
 
-    // Create a new meal log (one meal with multiple foods)
     @PostMapping
     public MealLogResponse createMeal(@Valid @RequestBody MealLogRequest request,
                                       Authentication authentication) {
-
         String username = authentication.getName();
         return mealLogService.createMeal(request, username);
     }
 
-    // Get all meals for the logged-in user
     @GetMapping("/mine")
     public List<MealLogResponse> myMeals(Authentication authentication) {
-
         String username = authentication.getName();
         return mealLogService.getMyMeals(username);
     }
 
-    // Delete a meal by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMeal(@PathVariable Long id, Authentication authentication) {
         String username = authentication.getName();

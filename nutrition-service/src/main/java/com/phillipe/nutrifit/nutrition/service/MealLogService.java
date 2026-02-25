@@ -1,7 +1,7 @@
-package com.phillipe.NutriFit.service;
+package com.phillipe.nutrifit.nutrition.service;
 
-import com.phillipe.NutriFit.dto.request.MealLogRequest;
-import com.phillipe.NutriFit.dto.response.MealLogResponse;
+import com.phillipe.nutrifit.nutrition.dto.request.MealLogRequest;
+import com.phillipe.nutrifit.nutrition.dto.response.MealLogResponse;
 
 import java.util.List;
 

@@ -1,0 +1,14 @@
+# Local development configuration — uses Hibernate ddl-auto:update
+# since SPRING_FLYWAY_ENABLED=false is typically set in the local env file.
+# Flyway migrations in V1__create_meal_tables.sql are used in other environments.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/nutrifit_nutrition
+    username: ${DB_USER:nutrifit}
+    password: ${DB_PASSWORD:nutrifit}
+  jpa:
+    hibernate:
+      ddl-auto: update
+  flyway:
+    enabled: false

@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -339,7 +340,7 @@ class WorkoutPlanServiceImplTest {
                 .workoutPlan(plan)
                 .dayNumber(1)
                 .dayName("Leg Day")
-                .exercises(List.of(exercise))
+                .exercises(Set.of(exercise))
                 .build();
 
         when(userRepo.findByUsername("testuser")).thenReturn(user);

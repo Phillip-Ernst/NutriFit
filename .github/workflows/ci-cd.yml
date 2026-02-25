@@ -10,6 +10,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY_BACKEND: nutrifit-backend
   ECR_REPOSITORY_FRONTEND: nutrifit-frontend
+  ECR_REPOSITORY_NUTRITION: nutrifit-nutrition
 
 jobs:
   # ==================== BACKEND ====================
@@ -68,6 +69,59 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  # ==================== NUTRITION SERVICE ====================
+  nutrition-test:
+    name: Nutrition Service - Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        working-directory: ./nutrition-service
+        run: ./mvnw test -B
+
+  nutrition-build:
+    name: Nutrition Service - Build Docker
+    runs-on: ubuntu-latest
+    needs: nutrition-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ./nutrition-service
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_NUTRITION:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_NUTRITION:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_NUTRITION:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_NUTRITION:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_NUTRITION:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   # ==================== FRONTEND ====================
   frontend-test:
@@ -133,7 +187,7 @@ jobs:
   deploy:
     name: Deploy to ECS
     runs-on: ubuntu-latest
-    needs: [backend-build, frontend-build]
+    needs: [backend-build, nutrition-build, frontend-build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
@@ -156,6 +210,14 @@ jobs:
             --query 'services[0].taskDefinition' --output text)
           echo "task-definition-arn=$PREVIOUS_ARN" >> $GITHUB_OUTPUT
           echo "Previous backend task definition: $PREVIOUS_ARN"
+
+      - name: Store previous nutrition task definition ARN
+        id: previous-nutrition
+        run: |
+          PREVIOUS_ARN=$(aws ecs describe-services --cluster NutriFit-Cluster --services nutrifit-nutrition \
+            --query 'services[0].taskDefinition' --output text)
+          echo "task-definition-arn=$PREVIOUS_ARN" >> $GITHUB_OUTPUT
+          echo "Previous nutrition task definition: $PREVIOUS_ARN"
 
       - name: Store previous frontend task definition ARN
         id: previous-frontend
@@ -185,6 +247,30 @@ jobs:
         with:
           task-definition: ${{ steps.backend-task-def.outputs.task-definition }}
           service: nutrifit-backend
+          cluster: NutriFit-Cluster
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      # Nutrition service deployment
+      - name: Download nutrition task definition
+        run: |
+          aws ecs describe-task-definition --task-definition nutrifit-nutrition \
+            --query taskDefinition > nutrition-task-definition.json
+
+      - name: Update nutrition image in task definition
+        id: nutrition-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: nutrition-task-definition.json
+          container-name: nutrifit-nutrition
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NUTRITION }}:${{ github.sha }}
+
+      - name: Deploy nutrition service to ECS
+        id: deploy-nutrition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.nutrition-task-def.outputs.task-definition }}
+          service: nutrifit-nutrition
           cluster: NutriFit-Cluster
           wait-for-service-stability: true
           wait-for-minutes: 10
@@ -220,19 +306,17 @@ jobs:
           echo "Waiting 30 seconds for services to stabilize..."
           sleep 30
 
-          # Get the load balancer DNS (assumes ALB is configured)
           ALB_DNS=$(aws elbv2 describe-load-balancers --names nutrifit-alb \
             --query 'LoadBalancers[0].DNSName' --output text 2>/dev/null || echo "")
 
           if [ -n "$ALB_DNS" ] && [ "$ALB_DNS" != "None" ]; then
-            echo "Testing backend health endpoint at http://$ALB_DNS/actuator/health"
-            HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$ALB_DNS/actuator/health" --max-time 10 || echo "000")
+            echo "Testing backend health at http://$ALB_DNS/actuator/health"
+            BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$ALB_DNS/actuator/health" --max-time 10 || echo "000")
+            echo "Backend health: $BACKEND_STATUS"
 
-            if [ "$HEALTH_STATUS" = "200" ]; then
-              echo "Health check passed! Status: $HEALTH_STATUS"
-            else
-              echo "Warning: Health check returned status $HEALTH_STATUS (non-fatal)"
-            fi
+            echo "Testing nutrition health at http://$ALB_DNS/api/meals/actuator/health"
+            NUTRITION_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$ALB_DNS/api/meals/actuator/health" --max-time 10 || echo "000")
+            echo "Nutrition health: $NUTRITION_STATUS"
           else
             echo "No ALB DNS found, skipping health check"
           fi
@@ -244,6 +328,14 @@ jobs:
           echo "Backend deployment failed, rolling back to: ${{ steps.previous-backend.outputs.task-definition-arn }}"
           aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-backend \
             --task-definition "${{ steps.previous-backend.outputs.task-definition-arn }}" \
+            --force-new-deployment
+
+      - name: Rollback nutrition on failure
+        if: failure() && steps.deploy-nutrition.outcome == 'failure'
+        run: |
+          echo "Nutrition deployment failed, rolling back to: ${{ steps.previous-nutrition.outputs.task-definition-arn }}"
+          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-nutrition \
+            --task-definition "${{ steps.previous-nutrition.outputs.task-definition-arn }}" \
             --force-new-deployment
 
       - name: Rollback frontend on failure

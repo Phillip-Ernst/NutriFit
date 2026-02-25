@@ -1,16 +1,12 @@
-package com.phillipe.NutriFit.service.impl;
+package com.phillipe.nutrifit.nutrition.service;
 
-import com.phillipe.NutriFit.repository.MealLogRepository;
-import com.phillipe.NutriFit.dto.request.FoodItemRequest;
-import com.phillipe.NutriFit.dto.request.MealLogRequest;
-import com.phillipe.NutriFit.dto.response.FoodItemResponse;
-import com.phillipe.NutriFit.dto.response.MealLogResponse;
-import com.phillipe.NutriFit.model.embedded.MealFoodEntry;
-import com.phillipe.NutriFit.model.entity.MealLog;
-import com.phillipe.NutriFit.repository.UserRepository;
-import com.phillipe.NutriFit.model.entity.User;
-import com.phillipe.NutriFit.service.MealLogService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import com.phillipe.nutrifit.nutrition.dto.request.FoodItemRequest;
+import com.phillipe.nutrifit.nutrition.dto.request.MealLogRequest;
+import com.phillipe.nutrifit.nutrition.dto.response.FoodItemResponse;
+import com.phillipe.nutrifit.nutrition.dto.response.MealLogResponse;
+import com.phillipe.nutrifit.nutrition.model.embedded.MealFoodEntry;
+import com.phillipe.nutrifit.nutrition.model.entity.MealLog;
+import com.phillipe.nutrifit.nutrition.repository.MealLogRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,11 +16,9 @@ import java.util.List;
 public class MealLogServiceImpl implements MealLogService {
 
     private final MealLogRepository mealLogRepo;
-    private final UserRepository userRepo;
 
-    public MealLogServiceImpl(MealLogRepository mealLogRepo, UserRepository userRepo) {
+    public MealLogServiceImpl(MealLogRepository mealLogRepo) {
         this.mealLogRepo = mealLogRepo;
-        this.userRepo = userRepo;
     }
 
     private int nz(Integer v) { return v == null ? 0 : v; }
@@ -32,13 +26,8 @@ public class MealLogServiceImpl implements MealLogService {
     @Override
     @Transactional
     public MealLogResponse createMeal(MealLogRequest request, String username) {
-        User user = userRepo.findByUsername(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("Username " + username + " not found");
-        }
-
         MealLog meal = MealLog.builder()
-                .user(user)
+                .username(username)
                 .build();
 
         int totalCals = 0, totalP = 0, totalCarbs = 0, totalFats = 0;
@@ -71,8 +60,7 @@ public class MealLogServiceImpl implements MealLogService {
     @Override
     @Transactional(readOnly = true)
     public List<MealLogResponse> getMyMeals(String username) {
-        User user = userRepo.findByUsername(username);
-        return mealLogRepo.findByUserIdOrderByCreatedAtDesc(user.getId())
+        return mealLogRepo.findByUsernameOrderByCreatedAtDesc(username)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -81,11 +69,7 @@ public class MealLogServiceImpl implements MealLogService {
     @Override
     @Transactional
     public void deleteMeal(Long id, String username) {
-        User user = userRepo.findByUsername(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("Username " + username + " not found");
-        }
-        MealLog meal = mealLogRepo.findByIdAndUserId(id, user.getId())
+        MealLog meal = mealLogRepo.findByIdAndUsername(id, username)
                 .orElseThrow(() -> new IllegalArgumentException("Meal not found or access denied"));
         mealLogRepo.delete(meal);
     }
