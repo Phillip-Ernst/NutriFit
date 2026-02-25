@@ -1,7 +1,10 @@
-package com.phillipe.NutriFit.dto.response;
+package com.phillipe.nutrifit.nutrition.dto.response;
 
-import com.phillipe.NutriFit.model.embedded.MealFoodEntry;
-import lombok.*;
+import com.phillipe.nutrifit.nutrition.model.embedded.MealFoodEntry;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

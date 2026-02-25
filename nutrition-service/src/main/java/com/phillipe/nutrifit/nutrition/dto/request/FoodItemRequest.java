@@ -1,8 +1,11 @@
-package com.phillipe.NutriFit.dto.request;
+package com.phillipe.nutrifit.nutrition.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

@@ -1,8 +1,20 @@
-package com.phillipe.NutriFit.model.entity;
+package com.phillipe.nutrifit.nutrition.model.entity;
 
-import com.phillipe.NutriFit.model.embedded.MealFoodEntry;
-import jakarta.persistence.*;
-import lombok.*;
+import com.phillipe.nutrifit.nutrition.model.embedded.MealFoodEntry;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,10 +33,8 @@ public class MealLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ties meal to the logged-in user
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(nullable = false)
+    private String username;
 
     @Builder.Default
     @Column(nullable = false)
@@ -50,5 +60,4 @@ public class MealLog {
     @ElementCollection
     @CollectionTable(name = "meal_log_foods", joinColumns = @JoinColumn(name = "meal_log_id"))
     private List<MealFoodEntry> foods = new ArrayList<>();
-
 }
