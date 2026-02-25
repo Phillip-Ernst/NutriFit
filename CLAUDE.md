@@ -1,9 +1,11 @@
 # NutriFit (monorepo) — Claude Code instructions
 
 ## What this repo is
-NutriFit is a nutrition + fitness tracking app.
-- backend/: Java Spring Boot API (JPA/Hibernate) + PostgreSQL
-- frontend/: React app (Vite)
+NutriFit is a nutrition + fitness tracking app built as a microservices architecture.
+- `backend/`: Java Spring Boot API — auth, workouts, workout plans, profile, measurements
+- `nutrition-service/`: Java Spring Boot API — meal logging (extracted microservice)
+- `frontend/`: React app (Vite)
+- `nginx/`: nginx config for production routing and local Docker stack
 
 Primary goals:
 - Clean REST API design, secure auth (JWT), and reliable DB modeling
@@ -11,31 +13,60 @@ Primary goals:
 - Simple, consistent React UI that matches API contracts
 
 ## Repo layout
-- backend/ ... Spring Boot project (Maven)
-- frontend/ ... React (Vite)
+```
+NutriFit/
+├── backend/          Spring Boot — auth, workouts, plans, profile, measurements (port 8080)
+├── nutrition-service/ Spring Boot — meal logging (port 8081)
+├── frontend/         React (Vite) — single frontend for both services
+├── nginx/            nginx routing config (production + local Docker)
+└── scripts/          AWS setup, DB init scripts, task definitions
+```
+
+---
+
+## Microservices Architecture
+
+### Routing
+All traffic goes through a single entry point — nginx (local Docker) or ALB (production):
+
+| Path pattern | Routes to | Port |
+|---|---|---|
+| `/api/meals*` | nutrition-service | 8081 |
+| `/api/*` | backend | 8080 |
+| `/` (default) | frontend | 80/443 |
+
+### JWT Trust Model
+Both services share the same `JWT_SECRET`. The nutrition-service validates JWTs directly from claims — no database lookup, no `UserDetailsService`. The backend issues tokens on login; nutrition-service trusts them.
 
 ---
 
 ## Database Architecture
 
+### Two Databases, One PostgreSQL Instance
+| Database | Owner | Purpose |
+|---|---|---|
+| `nutrifit` | backend | users, workouts, plans, profile, measurements |
+| `nutrifit_nutrition` | nutrition-service | meal_log, meal_log_foods |
+
 ### Environments
 | Environment | Database | Purpose |
-|-------------|----------|---------|
+|---|---|---|
 | **Local Dev** | Docker PostgreSQL | Fast iteration, isolated per developer |
-| **CI/CD** | Docker PostgreSQL | Automated tests in GitHub Actions |
-| **Production** | AWS RDS | Real user data, managed service |
+| **CI/CD** | Testcontainers | Automated tests in GitHub Actions |
+| **Production** | AWS RDS PostgreSQL | Real user data, managed service |
 
 ### Flyway Migrations
-- Migrations located in `backend/src/main/resources/db/migration/`
-- Naming convention: `V{number}__{description}.sql` (e.g., `V4__add_uuid_to_workout_plan_day.sql`)
-- Production uses `ddl-auto: validate` — schema changes MUST go through Flyway
-- Local can use `ddl-auto: update` for rapid iteration, but always create migrations before merging
 
-### Current Migrations
-- `V1__initial_schema.sql` — Users, meals, foods
-- `V2__add_user_profile.sql` — Profile and measurements
-- `V3__add_workouts.sql` — Workouts, exercises, workout plans
-- `V4__add_uuid_to_workout_plan_day.sql` — UUID column for entity equality
+**Backend** (`backend/src/main/resources/db/migration/`):
+- `V1__initial_schema.sql` — Users, workouts, workout plans
+- `V2__add_profile_and_measurements.sql` — Profile and body measurements
+- `V3__add_user_change_history.sql` — User change history audit table
+- `V4__add_uuid_to_workout_plan_day.sql` — UUID for WorkoutPlanDay equality
+- `V5__add_per_set_tracking.sql` — Per-set weight/reps tracking
+- `V5__drop_meal_tables.sql` — Drops legacy meal tables (run after nutrition-service migration)
+
+**Nutrition-service** (`nutrition-service/src/main/resources/db/migration/`):
+- `V1__create_meal_tables.sql` — meal_log, meal_log_foods (uses `username` string, no FK to users)
 
 ---
 
@@ -46,21 +77,25 @@ Primary goals:
 cd backend
 docker compose up -d
 ```
-PostgreSQL runs on port 5432.
+This starts PostgreSQL on port 5432 and creates **both** `nutrifit` and `nutrifit_nutrition` databases via `scripts/init-multiple-dbs.sh`.
 
 ### 2. Run the Backend
 ```bash
 cd backend
-
-# Load environment variables
 source NutriFit-backend.env
-
-# Run with Maven
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 Backend runs at `http://localhost:8080/api`
 
-### 3. Run the Frontend
+### 3. Run the Nutrition Service
+```bash
+cd nutrition-service
+source ../backend/NutriFit-backend.env   # shares the same env file
+./mvnw spring-boot:run
+```
+Nutrition service runs at `http://localhost:8081/api`
+
+### 4. Run the Frontend
 ```bash
 cd frontend
 npm install   # first time only
@@ -68,43 +103,44 @@ npm run dev
 ```
 Frontend runs at `http://localhost:5173`
 
+The Vite dev server proxies API calls:
+- `/api/meals*` → `http://localhost:8081`
+- `/api/*` → `http://localhost:8080`
+
 ### Quick Reference
 | Task | Command | Location |
 |------|---------|----------|
 | Start DB | `docker compose up -d` | backend/ |
 | Stop DB | `docker compose down` | backend/ |
 | Reset DB | `docker compose down -v && docker compose up -d` | backend/ |
-| Run backend | `./mvnw spring-boot:run` | backend/ |
+| Run backend | `./mvnw spring-boot:run -Dspring-boot.run.profiles=local` | backend/ |
+| Run nutrition-service | `./mvnw spring-boot:run` | nutrition-service/ |
 | Run frontend | `npm run dev` | frontend/ |
 | Backend tests | `./mvnw test` | backend/ |
+| Nutrition tests | `./mvnw test` | nutrition-service/ |
 | Frontend tests | `npm test` | frontend/ |
-| Flyway migrate | `./mvnw flyway:migrate` | backend/ |
-| Flyway repair | `./mvnw flyway:repair` | backend/ |
 
 ### Troubleshooting
-**Port 8080 in use:**
+**Kill services on ports:**
 ```bash
-lsof -ti:8080 | xargs kill -9
+lsof -ti:8080,8081 | xargs kill -9
 ```
 
-**Database won't start:**
+**Database won't start / nutrifit_nutrition missing:**
 ```bash
 docker compose down -v && docker compose up -d
 ```
+The `-v` flag removes the volume so the init script re-runs and recreates both databases.
 
-**Flyway migration fails:**
-```bash
-./mvnw flyway:repair
-./mvnw flyway:migrate
-```
+**Tests fail due to env vars:**
+Run `./mvnw test` without sourcing the `.env` file — tests use Testcontainers and set their own datasource URL.
 
 ---
 
-## Environment & secrets rules
+## Environment & Secrets Rules
 - Never hardcode secrets (JWT secrets, DB passwords, API keys).
-- Prefer .env (frontend) and environment variables (backend).
-- Backend env vars stored in `backend/NutriFit-backend.env` (not committed).
-- Required backend env vars: `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SPRING_DATASOURCE_*`
+- Backend and nutrition-service share `backend/NutriFit-backend.env` (not committed).
+- Required env vars: `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SPRING_DATASOURCE_*`
 - If you need new config values, add them to example env docs, not real secrets.
 
 ---
@@ -112,20 +148,17 @@ docker compose down -v && docker compose up -d
 ## Backend JPA/Hibernate Patterns
 
 ### Entity Collections: Use Set, Not List
-When an entity has multiple `@OneToMany` or `@ElementCollection` relationships that may be fetched together (via `@EntityGraph` or eager loading), use `Set` instead of `List` to avoid `MultipleBagFetchException`.
+When an entity has multiple `@OneToMany` or `@ElementCollection` relationships that may be fetched together, use `Set` instead of `List` to avoid `MultipleBagFetchException`.
 
 ```java
 // CORRECT: Use Set with LinkedHashSet for ordering
 @Builder.Default
 @OneToMany(mappedBy = "workoutPlan", cascade = CascadeType.ALL, orphanRemoval = true)
 private Set<WorkoutPlanDay> days = new LinkedHashSet<>();
-
-// WRONG: List causes MultipleBagFetchException with multiple eager fetches
-private List<WorkoutPlanDay> days = new ArrayList<>();
 ```
 
 ### Entity Equality: Use UUID for Set Collections
-Entities stored in `Set` collections need proper `equals()`/`hashCode()` before persistence (when `id` is still `null`). Use a UUID field:
+Entities stored in `Set` collections need proper `equals()`/`hashCode()` before persistence. Use a UUID field:
 
 ```java
 @Builder.Default
@@ -139,14 +172,7 @@ public boolean equals(Object o) {
     WorkoutPlanDay that = (WorkoutPlanDay) o;
     return Objects.equals(uuid, that.uuid);
 }
-
-@Override
-public int hashCode() {
-    return Objects.hash(uuid);
-}
 ```
-
-**Why:** Without UUID-based equality, new entities with `id = null` are all considered equal, causing Set deduplication bugs.
 
 ### Entities Using These Patterns
 - `WorkoutPlan` — `days` is a `Set<WorkoutPlanDay>`
@@ -154,18 +180,19 @@ public int hashCode() {
 
 ---
 
-## Coding workflow expectations
+## Coding Workflow Expectations
 - Make minimal, focused changes
 - Keep diffs small and easy to review
 - Update or add tests when behavior changes
 - If you change API contracts, update frontend calls + DTOs consistently
+- Meal endpoints belong to nutrition-service — never add meal logic to backend
 
-## "Don't surprise me" rules
+## "Don't Surprise Me" Rules
 - Don't rename packages or folders broadly unless asked
 - Don't introduce new frameworks unless needed
 - Don't add heavy dependencies when a small solution works
 
-## When uncertain
+## When Uncertain
 - Ask: "Do you want this as a quick patch or a proper refactor?"
 - Prefer the existing patterns already used in the repo.
 
@@ -177,13 +204,8 @@ public int hashCode() {
 - [ ] **Modal focus not trapped** — Modal component doesn't implement keyboard focus trap
 - [ ] **Array index as React key** — Several components use index as key (MealForm, WorkoutForm, MealCard, etc.)
 - [ ] **No axios interceptor tests** — Critical auth flow in `axios.ts` lacks test coverage
-- [ ] **Silent 401 redirect on protected routes** — 401 from protected routes redirects without notification (auth pages now show API error messages)
-
-## Recently Fixed Issues
-
-- [x] **MultipleBagFetchException** — Fixed by changing `List` to `Set` in `WorkoutPlan.days` and `WorkoutPlanDay.exercises`
-- [x] **Duplicate days in workout plans** — Fixed by Set collections deduplicating Cartesian product from JPA joins
-- [x] **Only Day 1 being added to plans** — Fixed by adding UUID-based equality to `WorkoutPlanDay` (V4 migration)
+- [ ] **Silent 401 redirect on protected routes** — 401 from protected routes redirects without notification
+- [ ] **Duplicate V5 migration** — `V5__add_per_set_tracking.sql` and `V5__drop_meal_tables.sql` share the same version number; rename one before adding V6
 
 ---
 
@@ -191,18 +213,17 @@ public int hashCode() {
 
 ### JWT Configuration
 - `JWT_SECRET` **must** be externalized via environment variable
+- Both backend and nutrition-service must use the **same** secret (tokens are cross-service)
 - Never generate secrets in constructors or static initializers
-- Document key rotation strategy for production
 
 ### CORS Configuration
 - CORS origins **must** be explicitly whitelisted via `CORS_ALLOWED_ORIGINS` env var
 - Never reflect arbitrary `Origin` headers back to the client
-- CORS is configured in `SecurityConfig.java` using Spring Security's `CorsConfigurationSource`
-- Supports comma-separated origins (e.g., `http://localhost:5173,https://example.com`)
+- Both services configure CORS independently via `SecurityConfig.java`
 
 ### Secrets Management
 - Never commit `.env` files (use `.env.example` templates)
-- Use environment variables or secret managers for production
+- Production secrets managed via AWS Secrets Manager
 - All numeric inputs should be validated (positive, within expected range)
 
 ---
@@ -216,7 +237,7 @@ public int hashCode() {
 - DateTime comparisons (e.g., `isToday()`) should use UTC to avoid timezone issues
 
 ### Error Response Format
-All API errors should return consistent JSON:
+All API errors from both services return consistent JSON:
 ```json
 {
   "error": "ERROR_CODE",
