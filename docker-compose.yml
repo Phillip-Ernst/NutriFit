@@ -1,17 +1,25 @@
+# Full stack: runs postgres + backend + frontend as Docker containers.
+# Use this to test the built application end-to-end (production-like).
+# For active development with hot-reload, run each service individually instead:
+#   backend: ./mvnw spring-boot:run -Dspring-boot.run.profiles=local (from backend/)
+#   nutrition: ./mvnw spring-boot:run (from nutrition-service/)
+#   frontend: npm run dev (from frontend/)
+# See CLAUDE.md for full local development instructions.
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: nutrifit-db
     environment:
-      POSTGRES_DB: ${DB_NAME:-nutrifit}
-      POSTGRES_USER: ${DB_USER:-nutrifit}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-localdev}
+      POSTGRES_DB: nutrifit
+      POSTGRES_USER: nutrifit
+      POSTGRES_PASSWORD: nutrifit
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nutrifit} -d ${DB_NAME:-nutrifit}"]
+      test: ["CMD-SHELL", "pg_isready -U nutrifit -d nutrifit"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,15 +31,11 @@ services:
     container_name: nutrifit-backend
     ports:
       - "8080:8080"
+    env_file:
+      - ./backend/NutriFit-backend.env
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-nutrifit}
-      DB_USER: ${DB_USER:-nutrifit}
-      DB_PASSWORD: ${DB_PASSWORD:-localdev}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      CORS_ALLOWED_ORIGINS: http://localhost:5173
-      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-minimum-32-chars}
+      DB_HOST: postgres      # override env_file: use container hostname, not localhost
+      DB_PASSWORD: nutrifit  # override env_file: match the postgres service above
     depends_on:
       postgres:
         condition: service_healthy
