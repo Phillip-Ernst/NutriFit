@@ -20,11 +20,16 @@
         {"name": "SPRING_DATASOURCE_URL", "value": "jdbc:postgresql://nutrifit-db-prod.cul6cmywq9x6.us-east-1.rds.amazonaws.com:5432/postgres"},
         {"name": "SPRING_DATASOURCE_USERNAME", "value": "nutrifit_admin"},
         {"name": "SPRING_JPA_HIBERNATE_DDL_AUTO", "value": "update"},
-        {"name": "CORS_ALLOWED_ORIGINS", "value": "https://nutritionxfitness.com,https://www.nutritionxfitness.com"}
+        {"name": "CORS_ALLOWED_ORIGINS", "value": "https://nutritionxfitness.com,https://www.nutritionxfitness.com"},
+        {"name": "FRONTEND_URL", "value": "https://nutritionxfitness.com"}
       ],
       "secrets": [
         {"name": "SPRING_DATASOURCE_PASSWORD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-db-password-RrkF6B"},
-        {"name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-jwt-secret-Drm77O"}
+        {"name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-jwt-secret-Drm77O"},
+        {"name": "GOOGLE_CLIENT_ID", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-google-client-id-4CARmw"},
+        {"name": "GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-google-client-secret-FrdQrT"},
+        {"name": "GITHUB_CLIENT_ID_PROD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-github-client-id-BFzU2T"},
+        {"name": "GITHUB_CLIENT_SECRET_PROD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-github-client-secret-3wfQ24"}
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

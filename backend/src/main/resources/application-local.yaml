@@ -10,6 +10,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: "http://localhost:5173/api/login/oauth2/code/google"
+          github:
+            client-id: ${GITHUB_CLIENT_ID_DEV}
+            client-secret: ${GITHUB_CLIENT_SECRET_DEV}
+            redirect-uri: "http://localhost:5173/api/login/oauth2/code/github"
 
 # For local development, you can override JWT secret here
 # In production, this MUST be set via environment variable

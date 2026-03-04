@@ -18,6 +18,7 @@ import EditPlanPage from '../pages/EditPlanPage';
 import ExecuteWorkoutPage from '../pages/ExecuteWorkoutPage';
 import ProfilePage from '../pages/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
+import OAuth2CallbackPage from '../pages/OAuth2CallbackPage';
 
 export default function AppRouter() {
   return (
@@ -26,6 +27,7 @@ export default function AppRouter() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
