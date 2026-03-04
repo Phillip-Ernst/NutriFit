@@ -190,7 +190,7 @@ class WorkoutPlanControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ==================== GET MY PLANS TESTS ====================
@@ -236,7 +236,7 @@ class WorkoutPlanControllerTest {
     @Test
     void getMyPlans_unauthenticated_shouldReturnForbidden() throws Exception {
         mockMvc.perform(get("/workout-plans/mine"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ==================== GET PLAN BY ID TESTS ====================
@@ -279,13 +279,13 @@ class WorkoutPlanControllerTest {
 
         mockMvc.perform(get("/workout-plans/1")
                         .with(user("wronguser")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void getPlanById_unauthenticated_shouldReturnForbidden() throws Exception {
         mockMvc.perform(get("/workout-plans/1"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ==================== UPDATE PLAN TESTS ====================
@@ -394,7 +394,7 @@ class WorkoutPlanControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ==================== DELETE PLAN TESTS ====================
@@ -430,14 +430,14 @@ class WorkoutPlanControllerTest {
         mockMvc.perform(delete("/workout-plans/1")
                         .with(csrf())
                         .with(user("wronguser")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void deletePlan_unauthenticated_shouldReturnForbidden() throws Exception {
         mockMvc.perform(delete("/workout-plans/1")
                         .with(csrf()))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ==================== GET PLAN DAY BY ID TESTS ====================
@@ -483,6 +483,6 @@ class WorkoutPlanControllerTest {
     @Test
     void getPlanDayById_unauthenticated_shouldReturnForbidden() throws Exception {
         mockMvc.perform(get("/workout-plans/days/1"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 }

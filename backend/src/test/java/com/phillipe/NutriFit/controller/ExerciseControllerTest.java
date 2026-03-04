@@ -8,6 +8,7 @@ import com.phillipe.NutriFit.service.UserService;
 import com.phillipe.NutriFit.service.WorkoutPlanService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -20,7 +21,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ExerciseController.class)
+@WebMvcTest(value = ExerciseController.class, excludeAutoConfiguration = {OAuth2ClientWebSecurityAutoConfiguration.class})
 class ExerciseControllerTest {
 
     @Autowired
