@@ -1,18 +1,26 @@
+# Full stack: runs postgres + backend + nutrition-service + frontend as Docker containers.
+# Use this to test the built application end-to-end (production-like).
+# For active development with hot-reload, run each service individually instead:
+#   backend: ./mvnw spring-boot:run -Dspring-boot.run.profiles=local (from backend/)
+#   nutrition: ./mvnw spring-boot:run (from nutrition-service/)
+#   frontend: npm run dev (from frontend/)
+# See CLAUDE.md for full local development instructions.
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: nutrifit-db
     environment:
-      POSTGRES_DB: ${DB_NAME:-nutrifit}
-      POSTGRES_USER: ${DB_USER:-nutrifit}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-localdev}
+      POSTGRES_DB: nutrifit
+      POSTGRES_USER: nutrifit
+      POSTGRES_PASSWORD: nutrifit
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/scripts/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nutrifit} -d ${DB_NAME:-nutrifit}"]
+      test: ["CMD-SHELL", "pg_isready -U nutrifit -d nutrifit"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,20 +32,13 @@ services:
     container_name: nutrifit-backend
     ports:
       - "8080:8080"
+    env_file:
+      - ./backend/NutriFit-backend.env
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-nutrifit}
-      DB_USER: ${DB_USER:-nutrifit}
-      DB_PASSWORD: ${DB_PASSWORD:-localdev}
+      DB_HOST: postgres      # override env_file: use container hostname, not localhost
+      DB_PASSWORD: nutrifit  # override env_file: match the postgres service above
       SPRING_PROFILES_ACTIVE: docker
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
-      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-minimum-32-chars}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GITHUB_CLIENT_ID_DEV: ${GITHUB_CLIENT_ID_DEV:-}
-      GITHUB_CLIENT_SECRET_DEV: ${GITHUB_CLIENT_SECRET_DEV:-}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URL: http://localhost:5173
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,12 +56,12 @@ services:
     container_name: nutrifit-nutrition
     ports:
       - "8081:8081"
+    env_file:
+      - ./backend/NutriFit-backend.env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nutrifit_nutrition
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-nutrifit}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-localdev}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
-      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-minimum-32-chars}
+      SPRING_DATASOURCE_USERNAME: nutrifit
+      SPRING_DATASOURCE_PASSWORD: nutrifit
     depends_on:
       postgres:
         condition: service_healthy

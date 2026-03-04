@@ -15,6 +15,11 @@ aws ecr create-repository \
     --region $AWS_REGION \
     --image-scanning-configuration scanOnPush=true
 
+aws ecr create-repository \
+    --repository-name nutrifit-nutrition \
+    --region $AWS_REGION \
+    --image-scanning-configuration scanOnPush=true
+
 # Get your ECR registry URL (you'll need this later)
 echo "Your ECR Registry URL:"
 aws sts get-caller-identity --query Account --output text | xargs -I {} echo "{}.dkr.ecr.${AWS_REGION}.amazonaws.com"

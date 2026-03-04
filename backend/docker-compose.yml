@@ -1,8 +1,14 @@
-# Local development database
-# Usage: docker-compose up -d
+# DB-only: starts PostgreSQL for local Maven development (port 5432).
+# Also runs init-multiple-dbs.sh to create both nutrifit and nutrifit_nutrition schemas.
+# Usage: docker compose up -d (from backend/ directory)
+#
+# After starting the DB, run services manually:
+#   backend:   source NutriFit-backend.env && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+#   nutrition: source NutriFit-backend.env && cd ../nutrition-service && ./mvnw spring-boot:run
+#   frontend:  npm run dev (from frontend/)
 #
 # NOTE: The init script (init-multiple-dbs.sh) only runs on first container creation.
-# If the postgres container already exists, reset with:
+# To reset both databases:
 #   docker compose down -v && docker compose up -d
 
 services:
