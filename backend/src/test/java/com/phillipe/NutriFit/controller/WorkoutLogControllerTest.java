@@ -202,7 +202,7 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    void createWorkout_unauthenticated_shouldReturnForbidden() throws Exception {
+    void createWorkout_unauthenticated_shouldReturnUnauthorized() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Running")
                 .durationMinutes(30)
@@ -216,7 +216,7 @@ class WorkoutLogControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ==================== CREATE WORKOUT FROM PLAN TESTS ====================
@@ -307,7 +307,7 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    void createWorkoutFromPlan_unauthenticated_shouldReturnForbidden() throws Exception {
+    void createWorkoutFromPlan_unauthenticated_shouldReturnUnauthorized() throws Exception {
         ExerciseItemRequest exercise = ExerciseItemRequest.builder()
                 .name("Barbell Row")
                 .sets(4)
@@ -323,7 +323,7 @@ class WorkoutLogControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ==================== GET MY WORKOUTS TESTS ====================
@@ -382,9 +382,9 @@ class WorkoutLogControllerTest {
     }
 
     @Test
-    void getMyWorkouts_unauthenticated_shouldReturnForbidden() throws Exception {
+    void getMyWorkouts_unauthenticated_shouldReturnUnauthorized() throws Exception {
         mockMvc.perform(get("/workouts/mine"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
 
         verify(workoutLogService, never()).getMyWorkouts(any());
     }
