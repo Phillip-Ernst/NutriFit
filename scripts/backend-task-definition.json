@@ -28,8 +28,8 @@
         {"name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-jwt-secret-Drm77O"},
         {"name": "GOOGLE_CLIENT_ID", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-google-client-id-4CARmw"},
         {"name": "GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-google-client-secret-FrdQrT"},
-        {"name": "GITHUB_CLIENT_ID_PROD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-github-client-id-BFzU2T"},
-        {"name": "GITHUB_CLIENT_SECRET_PROD", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-github-client-secret-3wfQ24"}
+        {"name": "GITHUB_CLIENT_ID", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-github-client-id-BFzU2T"},
+        {"name": "GITHUB_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:112129521897:secret:nutrifit-prod-github-client-secret-3wfQ24"}
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
