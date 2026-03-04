@@ -191,6 +191,9 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -228,16 +231,11 @@ jobs:
           echo "Previous frontend task definition: $PREVIOUS_ARN"
 
       # Backend deployment
-      - name: Download backend task definition
-        run: |
-          aws ecs describe-task-definition --task-definition nutrifit-backend \
-            --query taskDefinition > backend-task-definition.json
-
       - name: Update backend image in task definition
         id: backend-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: backend-task-definition.json
+          task-definition: scripts/backend-task-definition.json
           container-name: nutrifit-backend
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}
 
@@ -252,16 +250,11 @@ jobs:
           wait-for-minutes: 10
 
       # Nutrition service deployment
-      - name: Download nutrition task definition
-        run: |
-          aws ecs describe-task-definition --task-definition nutrifit-nutrition \
-            --query taskDefinition > nutrition-task-definition.json
-
       - name: Update nutrition image in task definition
         id: nutrition-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: nutrition-task-definition.json
+          task-definition: scripts/nutrition-task-definition.json
           container-name: nutrifit-nutrition
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NUTRITION }}:${{ github.sha }}
 
@@ -276,16 +269,11 @@ jobs:
           wait-for-minutes: 10
 
       # Frontend deployment
-      - name: Download frontend task definition
-        run: |
-          aws ecs describe-task-definition --task-definition nutrifit-frontend \
-            --query taskDefinition > frontend-task-definition.json
-
       - name: Update frontend image in task definition
         id: frontend-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: frontend-task-definition.json
+          task-definition: scripts/frontend-task-definition.json
           container-name: nutrifit-frontend
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_FRONTEND }}:${{ github.sha }}
 
