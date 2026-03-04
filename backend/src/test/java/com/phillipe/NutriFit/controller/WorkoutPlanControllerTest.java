@@ -279,7 +279,7 @@ class WorkoutPlanControllerTest {
 
         mockMvc.perform(get("/workout-plans/1")
                         .with(user("wronguser")))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -430,7 +430,7 @@ class WorkoutPlanControllerTest {
         mockMvc.perform(delete("/workout-plans/1")
                         .with(csrf())
                         .with(user("wronguser")))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
