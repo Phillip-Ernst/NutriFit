@@ -2,6 +2,9 @@ package com.phillipe.NutriFit.config;
 
 import com.phillipe.NutriFit.config.filter.JwtFilter;
 import com.phillipe.NutriFit.config.filter.RateLimitFilter;
+import com.phillipe.NutriFit.config.oauth2.NutriFitOAuth2UserService;
+import com.phillipe.NutriFit.config.oauth2.NutriFitOidcUserService;
+import com.phillipe.NutriFit.config.oauth2.OAuth2AuthenticationSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,8 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -29,18 +31,23 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final NutriFitOAuth2UserService oAuth2UserService;
+    private final NutriFitOidcUserService oidcUserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
 
     @Value("${cors.allowed-origins:http://localhost:5173}")
     private String allowedOriginsConfig;
 
-    public SecurityConfig(JwtFilter jwtFilter, RateLimitFilter rateLimitFilter) {
+    public SecurityConfig(JwtFilter jwtFilter,
+                          RateLimitFilter rateLimitFilter,
+                          NutriFitOAuth2UserService oAuth2UserService,
+                          NutriFitOidcUserService oidcUserService,
+                          OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler) {
         this.jwtFilter = jwtFilter;
         this.rateLimitFilter = rateLimitFilter;
-    }
-
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+        this.oAuth2UserService = oAuth2UserService;
+        this.oidcUserService = oidcUserService;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     @Bean
@@ -48,19 +55,34 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // IF_REQUIRED allows OAuth2 to store state in session during the auth flow;
+                // JWT-authenticated API calls will not create sessions.
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/register", "/api/login", "/actuator/**")
-                        .permitAll()
-                        .requestMatchers("/register", "/login")
-                        .permitAll()
+                        .requestMatchers(
+                                "/api/register", "/api/login",
+                                "/register", "/login",
+                                "/actuator/**",
+                                // OAuth2 authorization initiation and callback
+                                "/api/oauth2/**", "/api/login/oauth2/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
-
+                .oauth2Login(oauth2 -> oauth2
+                        // Custom base URIs so paths align with the /api servlet prefix
+                        .authorizationEndpoint(ae ->
+                                ae.baseUri("/api/oauth2/authorization"))
+                        .redirectionEndpoint(re ->
+                                re.baseUri("/api/login/oauth2/code/*"))
+                        .userInfoEndpoint(u -> u
+                                .userService(oAuth2UserService)    // GitHub (plain OAuth2)
+                                .oidcUserService(oidcUserService)  // Google (OIDC)
+                        )
+                        .successHandler(oAuth2SuccessHandler)
+                )
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
 
         return http.build();
     }

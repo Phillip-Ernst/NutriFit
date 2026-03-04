@@ -1,4 +1,4 @@
-# Full stack: runs postgres + backend + frontend as Docker containers.
+# Full stack: runs postgres + backend + nutrition-service + frontend as Docker containers.
 # Use this to test the built application end-to-end (production-like).
 # For active development with hot-reload, run each service individually instead:
 #   backend: ./mvnw spring-boot:run -Dspring-boot.run.profiles=local (from backend/)
@@ -15,9 +15,10 @@ services:
       POSTGRES_USER: nutrifit
       POSTGRES_PASSWORD: nutrifit
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nutrifit -d nutrifit"]
       interval: 10s
@@ -36,11 +37,36 @@ services:
     environment:
       DB_HOST: postgres      # override env_file: use container hostname, not localhost
       DB_PASSWORD: nutrifit  # override env_file: match the postgres service above
+      SPRING_PROFILES_ACTIVE: docker
+      FRONTEND_URL: http://localhost:5173
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  nutrition-service:
+    build:
+      context: ./nutrition-service
+      dockerfile: Dockerfile
+    container_name: nutrifit-nutrition
+    ports:
+      - "8081:8081"
+    env_file:
+      - ./backend/NutriFit-backend.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nutrifit_nutrition
+      SPRING_DATASOURCE_USERNAME: nutrifit
+      SPRING_DATASOURCE_PASSWORD: nutrifit
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8081/api/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -54,7 +80,10 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+      nutrition-service:
+        condition: service_healthy
 
 volumes:
   postgres_data:
