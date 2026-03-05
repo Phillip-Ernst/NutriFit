@@ -2,7 +2,6 @@ package com.phillipe.NutriFit.config;
 
 import com.phillipe.NutriFit.config.filter.JwtFilter;
 import com.phillipe.NutriFit.config.filter.RateLimitFilter;
-import com.phillipe.NutriFit.config.oauth2.NutriFitOAuth2UserService;
 import com.phillipe.NutriFit.config.oauth2.NutriFitOidcUserService;
 import com.phillipe.NutriFit.config.oauth2.OAuth2AuthenticationSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,7 +31,6 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final RateLimitFilter rateLimitFilter;
-    private final NutriFitOAuth2UserService oAuth2UserService;
     private final NutriFitOidcUserService oidcUserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
 
@@ -41,12 +39,10 @@ public class SecurityConfig {
 
     public SecurityConfig(JwtFilter jwtFilter,
                           RateLimitFilter rateLimitFilter,
-                          NutriFitOAuth2UserService oAuth2UserService,
                           NutriFitOidcUserService oidcUserService,
                           OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler) {
         this.jwtFilter = jwtFilter;
         this.rateLimitFilter = rateLimitFilter;
-        this.oAuth2UserService = oAuth2UserService;
         this.oidcUserService = oidcUserService;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
@@ -76,7 +72,6 @@ public class SecurityConfig {
                         .redirectionEndpoint(re ->
                                 re.baseUri("/api/login/oauth2/code/*"))
                         .userInfoEndpoint(u -> u
-                                .userService(oAuth2UserService)    // GitHub (plain OAuth2)
                                 .oidcUserService(oidcUserService)  // Google (OIDC)
                         )
                         .successHandler(oAuth2SuccessHandler)

@@ -7,7 +7,6 @@ import com.phillipe.NutriFit.dto.request.WorkoutLogRequest;
 import com.phillipe.NutriFit.dto.response.WorkoutLogResponse;
 import com.phillipe.NutriFit.config.RateLimitConfig;
 import com.phillipe.NutriFit.config.SecurityConfig;
-import com.phillipe.NutriFit.config.oauth2.NutriFitOAuth2UserService;
 import com.phillipe.NutriFit.config.oauth2.NutriFitOidcUserService;
 import com.phillipe.NutriFit.config.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.phillipe.NutriFit.service.JwtService;
@@ -58,9 +57,6 @@ class WorkoutLogControllerTest {
 
     @MockitoBean
     private RateLimitConfig rateLimitConfig;
-
-    @MockitoBean
-    private NutriFitOAuth2UserService oAuth2UserService;
 
     @MockitoBean
     private NutriFitOidcUserService oidcUserService;
