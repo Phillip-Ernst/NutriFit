@@ -15,11 +15,6 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET:}
             scope: openid, profile, email
             redirect-uri: "{baseUrl}/api/login/oauth2/code/{registrationId}"
-          github:
-            client-id: ${GITHUB_CLIENT_ID:}
-            client-secret: ${GITHUB_CLIENT_SECRET:}
-            scope: user:email
-            redirect-uri: "{baseUrl}/api/login/oauth2/code/{registrationId}"
 
   # Datasource can be configured via environment variables:
   # SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD

@@ -13,10 +13,3 @@ spring:
     baseline-on-migrate: true
     baseline-version: '0'
 
-  security:
-    oauth2:
-      client:
-        registration:
-          github:
-            client-id: ${GITHUB_CLIENT_ID_PROD}
-            client-secret: ${GITHUB_CLIENT_SECRET_PROD}
