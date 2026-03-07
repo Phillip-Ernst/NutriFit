@@ -205,31 +205,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Store previous task definitions for rollback
-      - name: Store previous backend task definition ARN
-        id: previous-backend
-        run: |
-          PREVIOUS_ARN=$(aws ecs describe-services --cluster NutriFit-Cluster --services nutrifit-backend \
-            --query 'services[0].taskDefinition' --output text)
-          echo "task-definition-arn=$PREVIOUS_ARN" >> $GITHUB_OUTPUT
-          echo "Previous backend task definition: $PREVIOUS_ARN"
-
-      - name: Store previous nutrition task definition ARN
-        id: previous-nutrition
-        run: |
-          PREVIOUS_ARN=$(aws ecs describe-services --cluster NutriFit-Cluster --services nutrifit-nutrition \
-            --query 'services[0].taskDefinition' --output text)
-          echo "task-definition-arn=$PREVIOUS_ARN" >> $GITHUB_OUTPUT
-          echo "Previous nutrition task definition: $PREVIOUS_ARN"
-
-      - name: Store previous frontend task definition ARN
-        id: previous-frontend
-        run: |
-          PREVIOUS_ARN=$(aws ecs describe-services --cluster NutriFit-Cluster --services nutrifit-frontend \
-            --query 'services[0].taskDefinition' --output text)
-          echo "task-definition-arn=$PREVIOUS_ARN" >> $GITHUB_OUTPUT
-          echo "Previous frontend task definition: $PREVIOUS_ARN"
-
       # Backend deployment
       - name: Update backend image in task definition
         id: backend-task-def
@@ -309,27 +284,3 @@ jobs:
             echo "No ALB DNS found, skipping health check"
           fi
 
-      # Rollback on failure
-      - name: Rollback backend on failure
-        if: failure() && steps.deploy-backend.outcome == 'failure'
-        run: |
-          echo "Backend deployment failed, rolling back to: ${{ steps.previous-backend.outputs.task-definition-arn }}"
-          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-backend \
-            --task-definition "${{ steps.previous-backend.outputs.task-definition-arn }}" \
-            --force-new-deployment
-
-      - name: Rollback nutrition on failure
-        if: failure() && steps.deploy-nutrition.outcome == 'failure'
-        run: |
-          echo "Nutrition deployment failed, rolling back to: ${{ steps.previous-nutrition.outputs.task-definition-arn }}"
-          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-nutrition \
-            --task-definition "${{ steps.previous-nutrition.outputs.task-definition-arn }}" \
-            --force-new-deployment
-
-      - name: Rollback frontend on failure
-        if: failure() && steps.deploy-frontend.outcome == 'failure'
-        run: |
-          echo "Frontend deployment failed, rolling back to: ${{ steps.previous-frontend.outputs.task-definition-arn }}"
-          aws ecs update-service --cluster NutriFit-Cluster --service nutrifit-frontend \
-            --task-definition "${{ steps.previous-frontend.outputs.task-definition-arn }}" \
-            --force-new-deployment
