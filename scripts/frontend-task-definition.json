@@ -7,7 +7,7 @@
   "executionRoleArn": "arn:aws:iam::112129521897:role/nutrifit-ecs-task-execution-role",
   "containerDefinitions": [
     {
-      "name": "frontend",
+      "name": "nutrifit-frontend",
       "image": "112129521897.dkr.ecr.us-east-1.amazonaws.com/nutrifit-frontend:latest",
       "essential": true,
       "portMappings": [

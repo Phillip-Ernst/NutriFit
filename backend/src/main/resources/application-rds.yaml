@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://${DB_HOST_RDS}:${DB_PORT_RDS}/${DB_NAME_RDS}
-    username: ${DB_USER_RDS}
-    password: ${DB_PASSWORD_RDS}
-
   jpa:
     hibernate:
       ddl-auto: validate
@@ -12,4 +7,3 @@ spring:
     enabled: true
     baseline-on-migrate: true
     baseline-version: '0'
-

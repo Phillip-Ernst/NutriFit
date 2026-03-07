@@ -247,7 +247,7 @@ jobs:
           service: nutrifit-backend
           cluster: NutriFit-Cluster
           wait-for-service-stability: true
-          wait-for-minutes: 10
+          wait-for-minutes: 15
 
       # Nutrition service deployment
       - name: Update nutrition image in task definition
@@ -266,7 +266,7 @@ jobs:
           service: nutrifit-nutrition
           cluster: NutriFit-Cluster
           wait-for-service-stability: true
-          wait-for-minutes: 10
+          wait-for-minutes: 15
 
       # Frontend deployment
       - name: Update frontend image in task definition
@@ -285,7 +285,7 @@ jobs:
           service: nutrifit-frontend
           cluster: NutriFit-Cluster
           wait-for-service-stability: true
-          wait-for-minutes: 10
+          wait-for-minutes: 15
 
       # Health check smoke test
       - name: Health check smoke test
