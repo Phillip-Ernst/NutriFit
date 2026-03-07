@@ -4,7 +4,7 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
   "memory": "512",
-  "executionRoleArn": "arn:aws:iam::112129521897:role/nutrifit-ecs-task-execution-role",
+  "executionRoleArn": "arn:aws:iam::112129521897:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "name": "nutrifit-frontend",
